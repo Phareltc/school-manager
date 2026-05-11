@@ -17,13 +17,18 @@ class Cours extends Model
         'heure_fin',
     ];
 
-    public function affectation(): BelongsTo 
+    public function affectation(): BelongsTo
     {
         return $this->belongsTo(Affectation::class);
     }
 
-    public function salle(): BelongsTo 
+    public function salle(): BelongsTo
     {
         return $this->belongsTo(Salle::class);
     }
+
+    protected $casts = [
+        'heure_debut' => 'datetime:H:i',
+        'heure_fin' => 'datetime:H:i',
+    ];
 }
