@@ -8,5 +8,7 @@ class Niveau extends Model
 {
     protected $table = 'niveaux'; // Forçage du pluriel français
 
-    protected $fillable = ['libelle'];
+    protected $fillable = [
+        'libelle'
+    ];
 }
