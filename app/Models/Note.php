@@ -39,6 +39,6 @@ class Note extends Model
     }
 
     protected $casts = [
-        'note' => 'float',
+        'note' => 'float:2',
     ];
 }
