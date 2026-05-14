@@ -11,14 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('notes', function (Blueprint $table) {
+        Schema::create('presences', function (Blueprint $table) {
             $table->id();
             $table->foreignId('eleve_id')->constrained('eleves')->cascadeOnDelete();
-            $table->foreignId('examen_id')->constrained('examens')->cascadeOnDelete();
-            $table->foreignId('matiere_id')->constrained('matieres')->cascadeOnDelete();
-            $table->foreignId('enseignant_id')->constrained('enseignants')->cascadeOnDelete();
-            $table->decimal('note', 4, 2);
-            $table->text('commentaire')->nullable();
+            $table->foreignId('cours_id')->constrained('cours')->cascadeOnDelete();
+            $table->date('date_presence');
+            $table->string('statut');
+            $table->time('heure_arrivee')->nullable();
+            $table->time('heure_depart')->nullable();
+            $table->boolean('est_justifiee')->default(false);
+            $table->text('motif_absence')->nullable();
             $table->timestamps();
         });
     }
@@ -28,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('notes');
+        Schema::dropIfExists('presences');
     }
 };

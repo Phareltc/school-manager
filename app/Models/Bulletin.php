@@ -18,14 +18,14 @@ class Bulletin extends Model
     ];
 
     public function eleve(): BelongsTo{
-        return $this->belongsTo('Eleve::class');
+        return $this->belongsTo(Eleve::class);
     }
 
     public function anneeScolaire(): BelongsTo{
-        return $this->belongsTo('AnneeScolaire::class');
+        return $this->belongsTo(AnneeScolaire::class);
     }
 
     protected $casts = [
-        'moyenne_generale' => 'float:2',
+        'moyenne_generale' => 'decimal:2',
     ];
 }

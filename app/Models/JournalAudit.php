@@ -5,18 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Enseignant extends Model
+class JournalAudit extends Model
 {
-    protected $table = 'enseignants';
+    protected $table = 'journal_audits';
 
     protected $fillable = [
         'user_id',
-        'specialite',
-        'date_embauche',
-    ];
-
-    protected $casts = [
-        'date_embauche' => 'date',
+        'action',
+        'description',
     ];
 
     public function user(): BelongsTo

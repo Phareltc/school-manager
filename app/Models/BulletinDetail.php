@@ -16,8 +16,14 @@ class BulletinDetail extends Model
         'appreciation_enseignant',
     ];
 
-    public function bulletinDetail(): BelongsTo {
-        return $this->belongsTo('BulletinDetail::class');
+    public function bulletin(): BelongsTo
+    {
+        return $this->belongsTo(Bulletin::class);
+    }
+
+    public function matiere(): BelongsTo
+    {
+        return $this->belongsTo(Matiere::class);
     }
 
     protected $casts = [
