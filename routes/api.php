@@ -18,7 +18,8 @@ Route::get('/niveaux/{niveau}', [NiveauController::class, 'show']);
 Route::put('/niveaux/{niveau}', [NiveauController::class, 'update']);
 Route::delete('/niveaux/{niveau}', [NiveauController::class, 'destroy']);
 
-
+Route::get('/eleves', [EleveController::class, 'index']);
 Route::post('/eleves', [EleveController::class, 'store']);
-Route::get('/eleves/{id}', [EleveController::class, 'show']);
-Route::put('/eleves/{id}', [EleveController::class, 'update']);
+Route::get('/eleves/{eleve}', [EleveController::class, 'show']);
+Route::put('/eleves/{eleve}', [EleveController::class, 'update']);
+Route::delete('/eleves/{eleve}', [EleveController::class, 'destroy']);
