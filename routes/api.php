@@ -4,6 +4,7 @@ use App\Http\Controllers\EleveController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NiveauController;
+use App\Http\Controllers\AnneeScolaireController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -23,3 +24,9 @@ Route::post('/eleves', [EleveController::class, 'store']);
 Route::get('/eleves/{eleve}', [EleveController::class, 'show']);
 Route::put('/eleves/{eleve}', [EleveController::class, 'update']);
 Route::delete('/eleves/{eleve}', [EleveController::class, 'destroy']);
+
+Route::get('/annees-scolaires', [AnneeScolaireController::class, 'index']);
+Route::post('/annees-scolaires', [AnneeScolaireController::class, 'store']);
+Route::get('/annees-scolaires/{anneeScolaire}', [AnneeScolaireController::class, 'show']);
+Route::put('/annees-scolaires/{anneeScolaire}', [AnneeScolaireController::class, 'update']);
+Route::delete('/annees-scolaires/{anneeScolaire}', [AnneeScolaireController::class, 'destroy']);
