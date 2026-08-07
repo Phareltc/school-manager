@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NiveauController;
 use App\Http\Controllers\AnneeScolaireController;
 use App\Http\Controllers\FiliereController;
+use App\Http\Controllers\ClasseController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -37,3 +38,9 @@ Route::post('/filieres', [FiliereController::class, 'store']);
 Route::get('/filieres/{filiere}', [FiliereController::class, 'show']);
 Route::put('/filieres/{filiere}', [FiliereController::class, 'update']);
 Route::delete('/filieres/{filiere}', [FiliereController::class, 'destroy']);
+
+Route::get('/classes', [ClasseController::class, 'index']);
+Route::post('/classes', [ClasseController::class, 'store']);
+Route::get('/classes/{classe}', [ClasseController::class, 'show']);
+Route::put('/classes/{classe}', [ClasseController::class, 'update']);
+Route::delete('/classes/{classe}', [ClasseController::class, 'destroy']);

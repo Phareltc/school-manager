@@ -6,23 +6,22 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::table('classes', function (Blueprint $table) {
-            //
+            $table->foreignId('filiere_id')
+                ->nullable()
+                ->after('niveau_id')
+                ->constrained('filieres')
+                ->nullOnDelete();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('classes', function (Blueprint $table) {
-            //
+            $table->dropForeign(['filiere_id']);
+            $table->dropColumn('filiere_id');
         });
     }
 };
