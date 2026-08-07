@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NiveauController;
 use App\Http\Controllers\AnneeScolaireController;
+use App\Http\Controllers\FiliereController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -30,3 +31,9 @@ Route::post('/annees-scolaires', [AnneeScolaireController::class, 'store']);
 Route::get('/annees-scolaires/{anneeScolaire}', [AnneeScolaireController::class, 'show']);
 Route::put('/annees-scolaires/{anneeScolaire}', [AnneeScolaireController::class, 'update']);
 Route::delete('/annees-scolaires/{anneeScolaire}', [AnneeScolaireController::class, 'destroy']);
+
+Route::get('/filieres', [FiliereController::class, 'index']);
+Route::post('/filieres', [FiliereController::class, 'store']);
+Route::get('/filieres/{filiere}', [FiliereController::class, 'show']);
+Route::put('/filieres/{filiere}', [FiliereController::class, 'update']);
+Route::delete('/filieres/{filiere}', [FiliereController::class, 'destroy']);
