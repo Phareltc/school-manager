@@ -3,63 +3,80 @@
 namespace App\Http\Controllers;
 
 use App\Models\Salle;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SalleController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): JsonResponse
     {
-        //
+        $salles = Salle::all();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Liste des salles récupérée avec succès',
+            'data' => $salles
+        ], 200);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         //
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
-        //
+        $donneesValidees = $request->validate([
+            'nom' => 'required|string|max:255|unique:salles,nom',
+            'capacite' => 'required|integer|min:1',
+        ]);
+
+        $salle = Salle::create($donneesValidees);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Salle créée avec succès !',
+            'data' => $salle
+        ], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Salle $salle)
+    public function show(Salle $salle): JsonResponse
     {
-        //
+        return response()->json([
+            'success' => true,
+            'message' => 'Détails de la salle récupérés avec succès !',
+            'data' => $salle
+        ], 200);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Salle $salle)
     {
         //
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Salle $salle)
+    public function update(Request $request, Salle $salle): JsonResponse
     {
-        //
+        $donneesValidees = $request->validate([
+            'nom' => 'required|string|max:255|unique:salles,nom,' . $salle->id,
+            'capacite' => 'required|integer|min:1',
+        ]);
+
+        $salle->update($donneesValidees);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Salle modifiée avec succès !',
+            'data' => $salle
+        ], 200);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Salle $salle)
+    public function destroy(Salle $salle): JsonResponse
     {
-        //
+        $salle->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Salle supprimée avec succès.'
+        ], 200);
     }
 }

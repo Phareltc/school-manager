@@ -7,6 +7,8 @@ use App\Http\Controllers\NiveauController;
 use App\Http\Controllers\AnneeScolaireController;
 use App\Http\Controllers\FiliereController;
 use App\Http\Controllers\ClasseController;
+use App\Http\Controllers\MatiereController;
+use App\Http\Controllers\SalleController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -44,3 +46,15 @@ Route::post('/classes', [ClasseController::class, 'store']);
 Route::get('/classes/{classe}', [ClasseController::class, 'show']);
 Route::put('/classes/{classe}', [ClasseController::class, 'update']);
 Route::delete('/classes/{classe}', [ClasseController::class, 'destroy']);
+
+Route::get('/matieres', [MatiereController::class, 'index']);
+Route::post('/matieres', [MatiereController::class, 'store']);
+Route::get('/matieres/{matiere}', [MatiereController::class, 'show']);
+Route::put('/matieres/{matiere}', [MatiereController::class, 'update']);
+Route::delete('/matieres/{matiere}', [MatiereController::class, 'destroy']);
+
+Route::get('/salles', [SalleController::class, 'index']);
+Route::post('/salles', [SalleController::class, 'store']);
+Route::get('/salles/{salle}', [SalleController::class, 'show']);
+Route::put('/salles/{salle}', [SalleController::class, 'update']);
+Route::delete('/salles/{salle}', [SalleController::class, 'destroy']);
