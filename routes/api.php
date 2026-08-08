@@ -9,6 +9,7 @@ use App\Http\Controllers\FiliereController;
 use App\Http\Controllers\ClasseController;
 use App\Http\Controllers\MatiereController;
 use App\Http\Controllers\SalleController;
+use App\Http\Controllers\EnseignantController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -58,3 +59,9 @@ Route::post('/salles', [SalleController::class, 'store']);
 Route::get('/salles/{salle}', [SalleController::class, 'show']);
 Route::put('/salles/{salle}', [SalleController::class, 'update']);
 Route::delete('/salles/{salle}', [SalleController::class, 'destroy']);
+
+Route::get('/enseignants', [EnseignantController::class, 'index']);
+Route::post('/enseignants', [EnseignantController::class, 'store']);
+Route::get('/enseignants/{enseignant}', [EnseignantController::class, 'show']);
+Route::put('/enseignants/{enseignant}', [EnseignantController::class, 'update']);
+Route::delete('/enseignants/{enseignant}', [EnseignantController::class, 'destroy']);
