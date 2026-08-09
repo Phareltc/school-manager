@@ -12,6 +12,10 @@ use App\Http\Controllers\SalleController;
 use App\Http\Controllers\EnseignantController;
 use App\Http\Controllers\AffectationController;
 use App\Http\Controllers\InscriptionController;
+use App\Http\Controllers\CoursController;
+
+
+
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -79,3 +83,9 @@ Route::post('/inscriptions', [InscriptionController::class, 'store']);
 Route::get('/inscriptions/{inscription}', [InscriptionController::class, 'show']);
 Route::put('/inscriptions/{inscription}', [InscriptionController::class, 'update']);
 Route::delete('/inscriptions/{inscription}', [InscriptionController::class, 'destroy']);
+
+Route::get('/cours', [CoursController::class, 'index']);
+Route::post('/cours', [CoursController::class, 'store']);
+Route::get('/cours/{cours}', [CoursController::class, 'show']);
+Route::put('/cours/{cours}', [CoursController::class, 'update']);
+Route::delete('/cours/{cours}', [CoursController::class, 'destroy']);
