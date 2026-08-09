@@ -11,6 +11,7 @@ use App\Http\Controllers\MatiereController;
 use App\Http\Controllers\SalleController;
 use App\Http\Controllers\EnseignantController;
 use App\Http\Controllers\AffectationController;
+use App\Http\Controllers\InscriptionController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -72,3 +73,9 @@ Route::post('/affectations', [AffectationController::class, 'store']);
 Route::get('/affectations/{affectation}', [AffectationController::class, 'show']);
 Route::put('/affectations/{affectation}', [AffectationController::class, 'update']);
 Route::delete('/affectations/{affectation}', [AffectationController::class, 'destroy']);
+
+Route::get('/inscriptions', [InscriptionController::class, 'index']);
+Route::post('/inscriptions', [InscriptionController::class, 'store']);
+Route::get('/inscriptions/{inscription}', [InscriptionController::class, 'show']);
+Route::put('/inscriptions/{inscription}', [InscriptionController::class, 'update']);
+Route::delete('/inscriptions/{inscription}', [InscriptionController::class, 'destroy']);
