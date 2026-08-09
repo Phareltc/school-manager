@@ -3,11 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Note;
+use App\Services\NoteService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class NoteController extends Controller
 {
+    public function __construct(
+        protected NoteService $noteService
+    ) {}
+
     public function index(): JsonResponse
     {
         $notes = Note::with(['eleve', 'examen', 'matiere', 'enseignant.user'])->get();
@@ -35,20 +40,7 @@ class NoteController extends Controller
             'commentaire' => 'nullable|string',
         ]);
 
-        // Règle métier : un élève ne peut avoir qu'une seule note pour un même examen et une même matière.
-        $dejaNote = Note::where('eleve_id', $donneesValidees['eleve_id'])
-            ->where('examen_id', $donneesValidees['examen_id'])
-            ->where('matiere_id', $donneesValidees['matiere_id'])
-            ->exists();
-
-        if ($dejaNote) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cet élève a déjà une note pour cet examen dans cette matière.',
-            ], 422);
-        }
-
-        $note = Note::create($donneesValidees);
+        $note = $this->noteService->creer($donneesValidees);
 
         return response()->json([
             'success' => true,
@@ -84,20 +76,7 @@ class NoteController extends Controller
             'commentaire' => 'nullable|string',
         ]);
 
-        $dejaNote = Note::where('eleve_id', $donneesValidees['eleve_id'])
-            ->where('examen_id', $donneesValidees['examen_id'])
-            ->where('matiere_id', $donneesValidees['matiere_id'])
-            ->where('id', '!=', $note->id)
-            ->exists();
-
-        if ($dejaNote) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cet élève a déjà une note pour cet examen dans cette matière.',
-            ], 422);
-        }
-
-        $note->update($donneesValidees);
+        $note = $this->noteService->modifier($note, $donneesValidees);
 
         return response()->json([
             'success' => true,
