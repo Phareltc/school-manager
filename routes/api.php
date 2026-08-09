@@ -15,6 +15,8 @@ use App\Http\Controllers\InscriptionController;
 use App\Http\Controllers\CoursController;
 use App\Http\Controllers\ExamenController;
 use App\Http\Controllers\NoteController;
+use App\Http\Controllers\BulletinController;
+use App\Http\Controllers\BulletinDetailController;
 
 
 
@@ -103,3 +105,16 @@ Route::post('/notes', [NoteController::class, 'store']);
 Route::get('/notes/{note}', [NoteController::class, 'show']);
 Route::put('/notes/{note}', [NoteController::class, 'update']);
 Route::delete('/notes/{note}', [NoteController::class, 'destroy']);
+
+Route::get('/bulletins', [BulletinController::class, 'index']);
+Route::post('/bulletins', [BulletinController::class, 'store']);
+Route::get('/bulletins/{bulletin}', [BulletinController::class, 'show']);
+Route::put('/bulletins/{bulletin}', [BulletinController::class, 'update']);
+Route::delete('/bulletins/{bulletin}', [BulletinController::class, 'destroy']);
+
+Route::get('/bulletin-details', [BulletinDetailController::class, 'index']);
+Route::post('/bulletin-details', [BulletinDetailController::class, 'store']);
+Route::get('/bulletin-details/{bulletinDetail}', [BulletinDetailController::class, 'show']);
+Route::put('/bulletin-details/{bulletinDetail}', [BulletinDetailController::class, 'update']);
+Route::delete('/bulletin-details/{bulletinDetail}', [BulletinDetailController::class, 'destroy']);
+

@@ -3,63 +3,110 @@
 namespace App\Http\Controllers;
 
 use App\Models\BulletinDetail;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class BulletinDetailController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): JsonResponse
     {
-        //
+        $bulletinDetails = BulletinDetail::with(['bulletin', 'matiere'])->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Liste des détails de bulletin récupérée avec succès',
+            'data' => $bulletinDetails
+        ], 200);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         //
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
-        //
+        $donneesValidees = $request->validate([
+            'bulletin_id' => 'required|exists:bulletins,id',
+            'matiere_id' => 'required|exists:matieres,id',
+            'moyenne_matiere' => 'required|numeric|min:0|max:20',
+            'appreciation_enseignant' => 'required|string',
+        ]);
+
+        // Règle métier : un bulletin ne peut avoir qu'une seule ligne par matière
+        $dejaDetail = BulletinDetail::where('bulletin_id', $donneesValidees['bulletin_id'])
+            ->where('matiere_id', $donneesValidees['matiere_id'])
+            ->exists();
+
+        if ($dejaDetail) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ce bulletin possède déjà une ligne pour cette matière.',
+            ], 422);
+        }
+
+        $bulletinDetail = BulletinDetail::create($donneesValidees);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Détail de bulletin créé avec succès !',
+            'data' => $bulletinDetail
+        ], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(BulletinDetail $bulletinDetail)
+    public function show(BulletinDetail $bulletinDetail): JsonResponse
     {
-        //
+        $bulletinDetail->load(['bulletin', 'matiere']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Détails récupérés avec succès !',
+            'data' => $bulletinDetail
+        ], 200);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(BulletinDetail $bulletinDetail)
     {
         //
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, BulletinDetail $bulletinDetail)
+    public function update(Request $request, BulletinDetail $bulletinDetail): JsonResponse
     {
-        //
+        $donneesValidees = $request->validate([
+            'bulletin_id' => 'required|exists:bulletins,id',
+            'matiere_id' => 'required|exists:matieres,id',
+            'moyenne_matiere' => 'required|numeric|min:0|max:20',
+            'appreciation_enseignant' => 'required|string',
+        ]);
+
+        $dejaDetail = BulletinDetail::where('bulletin_id', $donneesValidees['bulletin_id'])
+            ->where('matiere_id', $donneesValidees['matiere_id'])
+            ->where('id', '!=', $bulletinDetail->id)
+            ->exists();
+
+        if ($dejaDetail) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ce bulletin possède déjà une ligne pour cette matière.',
+            ], 422);
+        }
+
+        $bulletinDetail->update($donneesValidees);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Détail de bulletin modifié avec succès !',
+            'data' => $bulletinDetail
+        ], 200);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(BulletinDetail $bulletinDetail)
+    public function destroy(BulletinDetail $bulletinDetail): JsonResponse
     {
-        //
+        $bulletinDetail->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Détail de bulletin supprimé avec succès.'
+        ], 200);
     }
 }
