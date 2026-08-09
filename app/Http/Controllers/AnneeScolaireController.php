@@ -3,14 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\AnneeScolaire;
+use App\Services\AnneeScolaireService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AnneeScolaireController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    // ICI : on déclare qu'on a besoin d'un AnneeScolaireService.
+    // Laravel (le "patron") va automatiquement le fournir, sans qu'on écrive new AnneeScolaireService().
+    public function __construct(
+        protected AnneeScolaireService $anneeScolaireService
+    ) {}
+
     public function index(): JsonResponse
     {
         $anneesScolaires = AnneeScolaire::all();
@@ -27,9 +31,6 @@ class AnneeScolaireController extends Controller
         //
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request): JsonResponse
     {
         $donneesValidees = $request->validate([
@@ -39,13 +40,9 @@ class AnneeScolaireController extends Controller
             'est_actuelle' => 'boolean',
         ]);
 
-        // Règle métier : une seule année active à la fois.
-        // Si la nouvelle année est marquée comme actuelle, on désactive toutes les autres AVANT de créer.
-        if (!empty($donneesValidees['est_actuelle']) && $donneesValidees['est_actuelle']) {
-            AnneeScolaire::where('est_actuelle', true)->update(['est_actuelle' => false]);
-        }
-
-        $anneeScolaire = AnneeScolaire::create($donneesValidees);
+        // AVANT : toute la logique métier était ici, dans le contrôleur.
+        // MAINTENANT : le contrôleur délègue au spécialiste (le Service).
+        $anneeScolaire = $this->anneeScolaireService->creer($donneesValidees);
 
         return response()->json([
             'success' => true,
@@ -54,9 +51,6 @@ class AnneeScolaireController extends Controller
         ], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(AnneeScolaire $anneeScolaire): JsonResponse
     {
         return response()->json([
@@ -71,9 +65,6 @@ class AnneeScolaireController extends Controller
         //
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, AnneeScolaire $anneeScolaire): JsonResponse
     {
         $donneesValidees = $request->validate([
@@ -83,15 +74,7 @@ class AnneeScolaireController extends Controller
             'est_actuelle' => 'boolean',
         ]);
 
-        // Même règle métier ici : si on active celle-ci, on désactive les autres
-        // (sauf elle-même, sinon on se désactiverait avant de se mettre à jour).
-        if (!empty($donneesValidees['est_actuelle']) && $donneesValidees['est_actuelle']) {
-            AnneeScolaire::where('id', '!=', $anneeScolaire->id)
-                ->where('est_actuelle', true)
-                ->update(['est_actuelle' => false]);
-        }
-
-        $anneeScolaire->update($donneesValidees);
+        $anneeScolaire = $this->anneeScolaireService->modifier($anneeScolaire, $donneesValidees);
 
         return response()->json([
             'success' => true,
@@ -100,9 +83,6 @@ class AnneeScolaireController extends Controller
         ], 200);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(AnneeScolaire $anneeScolaire): JsonResponse
     {
         $anneeScolaire->delete();
