@@ -13,6 +13,8 @@ use App\Http\Controllers\EnseignantController;
 use App\Http\Controllers\AffectationController;
 use App\Http\Controllers\InscriptionController;
 use App\Http\Controllers\CoursController;
+use App\Http\Controllers\ExamenController;
+use App\Http\Controllers\NoteController;
 
 
 
@@ -89,3 +91,15 @@ Route::post('/cours', [CoursController::class, 'store']);
 Route::get('/cours/{cours}', [CoursController::class, 'show']);
 Route::put('/cours/{cours}', [CoursController::class, 'update']);
 Route::delete('/cours/{cours}', [CoursController::class, 'destroy']);
+
+Route::get('/examens', [ExamenController::class, 'index']);
+Route::post('/examens', [ExamenController::class, 'store']);
+Route::get('/examens/{examen}', [ExamenController::class, 'show']);
+Route::put('/examens/{examen}', [ExamenController::class, 'update']);
+Route::delete('/examens/{examen}', [ExamenController::class, 'destroy']);
+
+Route::get('/notes', [NoteController::class, 'index']);
+Route::post('/notes', [NoteController::class, 'store']);
+Route::get('/notes/{note}', [NoteController::class, 'show']);
+Route::put('/notes/{note}', [NoteController::class, 'update']);
+Route::delete('/notes/{note}', [NoteController::class, 'destroy']);
