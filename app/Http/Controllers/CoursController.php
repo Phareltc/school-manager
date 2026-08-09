@@ -3,11 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cours;
+use App\Services\CoursService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CoursController extends Controller
 {
+    public function __construct(
+        protected CoursService $coursService
+    ) {}
+
     public function index(): JsonResponse
     {
         $cours = Cours::with(['affectation.enseignant.user', 'affectation.classe', 'affectation.matiere', 'salle'])->get();
@@ -34,27 +39,7 @@ class CoursController extends Controller
             'heure_fin' => 'required|date_format:H:i|after:heure_debut',
         ]);
 
-        // Règle métier : empêcher un enseignant d'avoir deux cours au même horaire.
-        // On récupère l'enseignant lié à l'affectation demandée, puis on cherche
-        // si un cours existant, pour ce même enseignant, ce même jour, chevauche l'horaire demandé.
-        $enseignantId = \App\Models\Affectation::findOrFail($donneesValidees['affectation_id'])->enseignant_id;
-
-        $conflit = Cours::whereHas('affectation', function ($query) use ($enseignantId) {
-                $query->where('enseignant_id', $enseignantId);
-            })
-            ->where('jour_semaine', $donneesValidees['jour_semaine'])
-            ->where('heure_debut', '<', $donneesValidees['heure_fin'])
-            ->where('heure_fin', '>', $donneesValidees['heure_debut'])
-            ->exists();
-
-        if ($conflit) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cet enseignant a déjà un cours sur ce créneau horaire.',
-            ], 422);
-        }
-
-        $coursCree = Cours::create($donneesValidees);
+        $coursCree = $this->coursService->creer($donneesValidees);
 
         return response()->json([
             'success' => true,
@@ -89,25 +74,7 @@ class CoursController extends Controller
             'heure_fin' => 'required|date_format:H:i|after:heure_debut',
         ]);
 
-        $enseignantId = \App\Models\Affectation::findOrFail($donneesValidees['affectation_id'])->enseignant_id;
-
-        $conflit = Cours::whereHas('affectation', function ($query) use ($enseignantId) {
-                $query->where('enseignant_id', $enseignantId);
-            })
-            ->where('jour_semaine', $donneesValidees['jour_semaine'])
-            ->where('heure_debut', '<', $donneesValidees['heure_fin'])
-            ->where('heure_fin', '>', $donneesValidees['heure_debut'])
-            ->where('id', '!=', $cours->id)
-            ->exists();
-
-        if ($conflit) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cet enseignant a déjà un cours sur ce créneau horaire.',
-            ], 422);
-        }
-
-        $cours->update($donneesValidees);
+        $cours = $this->coursService->modifier($cours, $donneesValidees);
 
         return response()->json([
             'success' => true,

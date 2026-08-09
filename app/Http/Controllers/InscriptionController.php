@@ -3,11 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Inscription;
+use App\Services\InscriptionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class InscriptionController extends Controller
 {
+    public function __construct(
+        protected InscriptionService $inscriptionService
+    ) {}
+
     public function index(): JsonResponse
     {
         $inscriptions = Inscription::with(['eleve', 'classe', 'anneeScolaire'])->get();
@@ -34,26 +39,7 @@ class InscriptionController extends Controller
             'statut' => 'in:actif,transféré,abandonné',
         ]);
 
-        // Règle métier : un élève ne peut avoir qu'une seule inscription ACTIVE par année scolaire.
-        // On ne bloque que si la nouvelle inscription est elle-même "active" (ou pas précisée, car
-        // le statut par défaut en base est "actif").
-        $statutDemande = $donneesValidees['statut'] ?? 'actif';
-
-        if ($statutDemande === 'actif') {
-            $dejaInscritActif = Inscription::where('eleve_id', $donneesValidees['eleve_id'])
-                ->where('annee_scolaire_id', $donneesValidees['annee_scolaire_id'])
-                ->where('statut', 'actif')
-                ->exists();
-
-            if ($dejaInscritActif) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cet élève possède déjà une inscription active pour cette année scolaire.',
-                ], 422);
-            }
-        }
-
-        $inscription = Inscription::create($donneesValidees);
+        $inscription = $this->inscriptionService->creer($donneesValidees);
 
         return response()->json([
             'success' => true,
@@ -88,24 +74,7 @@ class InscriptionController extends Controller
             'statut' => 'in:actif,transféré,abandonné',
         ]);
 
-        $statutDemande = $donneesValidees['statut'] ?? 'actif';
-
-        if ($statutDemande === 'actif') {
-            $dejaInscritActif = Inscription::where('eleve_id', $donneesValidees['eleve_id'])
-                ->where('annee_scolaire_id', $donneesValidees['annee_scolaire_id'])
-                ->where('statut', 'actif')
-                ->where('id', '!=', $inscription->id)
-                ->exists();
-
-            if ($dejaInscritActif) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cet élève possède déjà une inscription active pour cette année scolaire.',
-                ], 422);
-            }
-        }
-
-        $inscription->update($donneesValidees);
+        $inscription = $this->inscriptionService->modifier($inscription, $donneesValidees);
 
         return response()->json([
             'success' => true,
