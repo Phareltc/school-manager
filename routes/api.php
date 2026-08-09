@@ -10,6 +10,7 @@ use App\Http\Controllers\ClasseController;
 use App\Http\Controllers\MatiereController;
 use App\Http\Controllers\SalleController;
 use App\Http\Controllers\EnseignantController;
+use App\Http\Controllers\AffectationController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -65,3 +66,9 @@ Route::post('/enseignants', [EnseignantController::class, 'store']);
 Route::get('/enseignants/{enseignant}', [EnseignantController::class, 'show']);
 Route::put('/enseignants/{enseignant}', [EnseignantController::class, 'update']);
 Route::delete('/enseignants/{enseignant}', [EnseignantController::class, 'destroy']);
+
+Route::get('/affectations', [AffectationController::class, 'index']);
+Route::post('/affectations', [AffectationController::class, 'store']);
+Route::get('/affectations/{affectation}', [AffectationController::class, 'show']);
+Route::put('/affectations/{affectation}', [AffectationController::class, 'update']);
+Route::delete('/affectations/{affectation}', [AffectationController::class, 'destroy']);
