@@ -17,6 +17,8 @@ use App\Http\Controllers\ExamenController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\BulletinController;
 use App\Http\Controllers\BulletinDetailController;
+use App\Http\Controllers\PresenceController;
+use App\Http\Controllers\JournalAuditController;
 
 
 
@@ -118,3 +120,14 @@ Route::get('/bulletin-details/{bulletinDetail}', [BulletinDetailController::clas
 Route::put('/bulletin-details/{bulletinDetail}', [BulletinDetailController::class, 'update']);
 Route::delete('/bulletin-details/{bulletinDetail}', [BulletinDetailController::class, 'destroy']);
 
+Route::get('/presences', [PresenceController::class, 'index']);
+Route::post('/presences', [PresenceController::class, 'store']);
+Route::get('/presences/{presence}', [PresenceController::class, 'show']);
+Route::put('/presences/{presence}', [PresenceController::class, 'update']);
+Route::delete('/presences/{presence}', [PresenceController::class, 'destroy']);
+
+Route::get('/journal-audits', [JournalAuditController::class, 'index']);
+Route::post('/journal-audits', [JournalAuditController::class, 'store']);
+Route::get('/journal-audits/{journalAudit}', [JournalAuditController::class, 'show']);
+Route::put('/journal-audits/{journalAudit}', [JournalAuditController::class, 'update']);
+Route::delete('/journal-audits/{journalAudit}', [JournalAuditController::class, 'destroy']);
