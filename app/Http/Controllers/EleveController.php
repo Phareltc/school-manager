@@ -5,8 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Eleve;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\JsonResource;
-use JsonException;
+use Illuminate\Validation\Rule;
 
 class EleveController extends Controller
 {
@@ -37,25 +36,18 @@ class EleveController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        // ÉTAPE 1 : La sécurité (Validation)
-        // On vérifie que le client envoie bien les données obligatoires et au bon format.
-        // Si le nom manque ou si le téléphone n'est pas unique, Laravel s'arrête ici et renvoie une erreur.
         $donneesValidees = $request->validate([
             'nom' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
             'matricule' => 'required|string|unique:eleves,matricule',
             'date_naissance' => 'required|date',
-            'sexe' => 'required|string|max:1', // 'M' ou 'F'
+            'sexe' => ['required', Rule::in(['Masculin', 'Féminin'])],
             'telephone' => 'nullable|string',
             'adresse' => 'nullable|string',
         ]);
 
-        // ÉTAPE 2 : L'insertion en base
-        // Le modèle Eleve prend les données validées et crée une nouvelle ligne dans PostgreSQL.
         $eleve = Eleve::create($donneesValidees);
 
-        // ÉTAPE 3 : La réponse
-        // On renvoie un code 201 (qui signifie "Créé avec succès") et l'élève avec son tout nouvel ID.
         return response()->json([
             'success' => true,
             'message' => 'Élève inscrit avec succès !',
@@ -93,7 +85,7 @@ class EleveController extends Controller
             'prenom' => 'required|string|max:255',
             'matricule' => 'required|string|unique:eleves,matricule,' . $eleve->id,
             'date_naissance' => 'required|date',
-            'sexe' => 'required|string|max:1', // 'M' ou 'F'
+            'sexe' => ['required', Rule::in(['Masculin', 'Féminin'])],
             'telephone' => 'nullable|string',
             'adresse' => 'nullable|string',
         ]);
