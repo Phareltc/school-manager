@@ -19,13 +19,19 @@ use App\Http\Controllers\BulletinController;
 use App\Http\Controllers\BulletinDetailController;
 use App\Http\Controllers\PresenceController;
 use App\Http\Controllers\JournalAuditController;
+use App\Http\Controllers\AuthController;
 
 
 
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+// Routes publiques (pas besoin d'être connecté)
+Route::post('/login', [AuthController::class, 'login']);
+
+// Routes protégées (nécessitent un token Sanctum valide)
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/me', [AuthController::class, 'me']);
+});
 
 
 // Quand le client tape /api/niveaux avec la méthode GET, on appelle la fonction 'index' du NiveauController
