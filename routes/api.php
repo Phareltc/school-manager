@@ -1,17 +1,18 @@
 <?php
 
-use App\Http\Controllers\EleveController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\NiveauController;
 use App\Http\Controllers\AnneeScolaireController;
 use App\Http\Controllers\FiliereController;
 use App\Http\Controllers\ClasseController;
+use App\Http\Controllers\EleveController;
+use App\Http\Controllers\InscriptionController;
 use App\Http\Controllers\MatiereController;
 use App\Http\Controllers\SalleController;
 use App\Http\Controllers\EnseignantController;
 use App\Http\Controllers\AffectationController;
-use App\Http\Controllers\InscriptionController;
 use App\Http\Controllers\CoursController;
 use App\Http\Controllers\ExamenController;
 use App\Http\Controllers\NoteController;
@@ -19,52 +20,76 @@ use App\Http\Controllers\BulletinController;
 use App\Http\Controllers\BulletinDetailController;
 use App\Http\Controllers\PresenceController;
 use App\Http\Controllers\JournalAuditController;
-use App\Http\Controllers\AuthController;
 
+// ============================================
+// AUTHENTIFICATION
+// ============================================
 
-
-
-// Routes publiques (pas besoin d'être connecté)
 Route::post('/login', [AuthController::class, 'login']);
 
-// Routes protégées (nécessitent un token Sanctum valide)
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 });
 
+// ============================================
+// MODULE ACADÉMIQUE (protégé)
+// ============================================
 
-// Quand le client tape /api/niveaux avec la méthode GET, on appelle la fonction 'index' du NiveauController
-Route::get('/niveaux', [NiveauController::class, 'index']);
-Route::post('/niveaux', [NiveauController::class, 'store']);
-// ATTENTION : Ici on écrit {niveau} pour correspondre à Niveau $niveau
-Route::get('/niveaux/{niveau}', [NiveauController::class, 'show']);
-Route::put('/niveaux/{niveau}', [NiveauController::class, 'update']);
-Route::delete('/niveaux/{niveau}', [NiveauController::class, 'destroy']);
+// --- Lecture : accessible à tout utilisateur authentifié ---
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/annees-scolaires', [AnneeScolaireController::class, 'index']);
+    Route::get('/annees-scolaires/{anneeScolaire}', [AnneeScolaireController::class, 'show']);
 
-Route::get('/eleves', [EleveController::class, 'index']);
-Route::post('/eleves', [EleveController::class, 'store']);
-Route::get('/eleves/{eleve}', [EleveController::class, 'show']);
-Route::put('/eleves/{eleve}', [EleveController::class, 'update']);
-Route::delete('/eleves/{eleve}', [EleveController::class, 'destroy']);
+    Route::get('/niveaux', [NiveauController::class, 'index']);
+    Route::get('/niveaux/{niveau}', [NiveauController::class, 'show']);
 
-Route::get('/annees-scolaires', [AnneeScolaireController::class, 'index']);
-Route::post('/annees-scolaires', [AnneeScolaireController::class, 'store']);
-Route::get('/annees-scolaires/{anneeScolaire}', [AnneeScolaireController::class, 'show']);
-Route::put('/annees-scolaires/{anneeScolaire}', [AnneeScolaireController::class, 'update']);
-Route::delete('/annees-scolaires/{anneeScolaire}', [AnneeScolaireController::class, 'destroy']);
+    Route::get('/filieres', [FiliereController::class, 'index']);
+    Route::get('/filieres/{filiere}', [FiliereController::class, 'show']);
 
-Route::get('/filieres', [FiliereController::class, 'index']);
-Route::post('/filieres', [FiliereController::class, 'store']);
-Route::get('/filieres/{filiere}', [FiliereController::class, 'show']);
-Route::put('/filieres/{filiere}', [FiliereController::class, 'update']);
-Route::delete('/filieres/{filiere}', [FiliereController::class, 'destroy']);
+    Route::get('/classes', [ClasseController::class, 'index']);
+    Route::get('/classes/{classe}', [ClasseController::class, 'show']);
 
-Route::get('/classes', [ClasseController::class, 'index']);
-Route::post('/classes', [ClasseController::class, 'store']);
-Route::get('/classes/{classe}', [ClasseController::class, 'show']);
-Route::put('/classes/{classe}', [ClasseController::class, 'update']);
-Route::delete('/classes/{classe}', [ClasseController::class, 'destroy']);
+    Route::get('/eleves', [EleveController::class, 'index']);
+    Route::get('/eleves/{eleve}', [EleveController::class, 'show']);
+
+    Route::get('/inscriptions', [InscriptionController::class, 'index']);
+    Route::get('/inscriptions/{inscription}', [InscriptionController::class, 'show']);
+});
+
+// --- Écriture : réservée à l'admin ---
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::post('/annees-scolaires', [AnneeScolaireController::class, 'store']);
+    Route::put('/annees-scolaires/{anneeScolaire}', [AnneeScolaireController::class, 'update']);
+    Route::delete('/annees-scolaires/{anneeScolaire}', [AnneeScolaireController::class, 'destroy']);
+
+    Route::post('/niveaux', [NiveauController::class, 'store']);
+    Route::put('/niveaux/{niveau}', [NiveauController::class, 'update']);
+    Route::delete('/niveaux/{niveau}', [NiveauController::class, 'destroy']);
+
+    Route::post('/filieres', [FiliereController::class, 'store']);
+    Route::put('/filieres/{filiere}', [FiliereController::class, 'update']);
+    Route::delete('/filieres/{filiere}', [FiliereController::class, 'destroy']);
+
+    Route::post('/classes', [ClasseController::class, 'store']);
+    Route::put('/classes/{classe}', [ClasseController::class, 'update']);
+    Route::delete('/classes/{classe}', [ClasseController::class, 'destroy']);
+
+    Route::post('/eleves', [EleveController::class, 'store']);
+    Route::put('/eleves/{eleve}', [EleveController::class, 'update']);
+    Route::delete('/eleves/{eleve}', [EleveController::class, 'destroy']);
+});
+
+// --- Écriture inscriptions : permission dédiée ---
+Route::middleware(['auth:sanctum', 'permission:gerer-inscriptions'])->group(function () {
+    Route::post('/inscriptions', [InscriptionController::class, 'store']);
+    Route::put('/inscriptions/{inscription}', [InscriptionController::class, 'update']);
+    Route::delete('/inscriptions/{inscription}', [InscriptionController::class, 'destroy']);
+});
+
+// ============================================
+// MODULE PÉDAGOGIQUE (pas encore protégé)
+// ============================================
 
 Route::get('/matieres', [MatiereController::class, 'index']);
 Route::post('/matieres', [MatiereController::class, 'store']);
@@ -90,17 +115,15 @@ Route::get('/affectations/{affectation}', [AffectationController::class, 'show']
 Route::put('/affectations/{affectation}', [AffectationController::class, 'update']);
 Route::delete('/affectations/{affectation}', [AffectationController::class, 'destroy']);
 
-Route::get('/inscriptions', [InscriptionController::class, 'index']);
-Route::post('/inscriptions', [InscriptionController::class, 'store']);
-Route::get('/inscriptions/{inscription}', [InscriptionController::class, 'show']);
-Route::put('/inscriptions/{inscription}', [InscriptionController::class, 'update']);
-Route::delete('/inscriptions/{inscription}', [InscriptionController::class, 'destroy']);
-
 Route::get('/cours', [CoursController::class, 'index']);
 Route::post('/cours', [CoursController::class, 'store']);
 Route::get('/cours/{cours}', [CoursController::class, 'show']);
 Route::put('/cours/{cours}', [CoursController::class, 'update']);
 Route::delete('/cours/{cours}', [CoursController::class, 'destroy']);
+
+// ============================================
+// MODULE ÉVALUATIONS (pas encore protégé)
+// ============================================
 
 Route::get('/examens', [ExamenController::class, 'index']);
 Route::post('/examens', [ExamenController::class, 'store']);
@@ -126,11 +149,19 @@ Route::get('/bulletin-details/{bulletinDetail}', [BulletinDetailController::clas
 Route::put('/bulletin-details/{bulletinDetail}', [BulletinDetailController::class, 'update']);
 Route::delete('/bulletin-details/{bulletinDetail}', [BulletinDetailController::class, 'destroy']);
 
+// ============================================
+// MODULE VIE SCOLAIRE (pas encore protégé)
+// ============================================
+
 Route::get('/presences', [PresenceController::class, 'index']);
 Route::post('/presences', [PresenceController::class, 'store']);
 Route::get('/presences/{presence}', [PresenceController::class, 'show']);
 Route::put('/presences/{presence}', [PresenceController::class, 'update']);
 Route::delete('/presences/{presence}', [PresenceController::class, 'destroy']);
+
+// ============================================
+// MODULE AUDIT (pas encore protégé)
+// ============================================
 
 Route::get('/journal-audits', [JournalAuditController::class, 'index']);
 Route::post('/journal-audits', [JournalAuditController::class, 'store']);
