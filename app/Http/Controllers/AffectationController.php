@@ -3,14 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\Affectation;
+use App\Services\AffectationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AffectationController extends Controller
 {
+    public function __construct(
+        protected AffectationService $affectationService
+    ) {}
+
     public function index(): JsonResponse
     {
-        // On charge toutes les relations pour un JSON directement exploitable côté frontend
         $affectations = Affectation::with(['enseignant.user', 'classe', 'matiere', 'anneeScolaire'])->get();
 
         return response()->json([
@@ -35,22 +39,7 @@ class AffectationController extends Controller
             'charge_horaire_hebdomadaire' => 'required|integer|min:1',
         ]);
 
-        // Règle métier : un même enseignant ne peut pas être affecté deux fois
-        // à la même matière, dans la même classe, pour la même année scolaire.
-        $doublon = Affectation::where('enseignant_id', $donneesValidees['enseignant_id'])
-            ->where('classe_id', $donneesValidees['classe_id'])
-            ->where('matiere_id', $donneesValidees['matiere_id'])
-            ->where('annee_scolaire_id', $donneesValidees['annee_scolaire_id'])
-            ->exists();
-
-        if ($doublon) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cet enseignant est déjà affecté à cette matière, dans cette classe, pour cette année scolaire.',
-            ], 422);
-        }
-
-        $affectation = Affectation::create($donneesValidees);
+        $affectation = $this->affectationService->creer($donneesValidees);
 
         return response()->json([
             'success' => true,
@@ -85,22 +74,7 @@ class AffectationController extends Controller
             'charge_horaire_hebdomadaire' => 'required|integer|min:1',
         ]);
 
-        // Même vérification de doublon, en excluant l'affectation qu'on est en train de modifier
-        $doublon = Affectation::where('enseignant_id', $donneesValidees['enseignant_id'])
-            ->where('classe_id', $donneesValidees['classe_id'])
-            ->where('matiere_id', $donneesValidees['matiere_id'])
-            ->where('annee_scolaire_id', $donneesValidees['annee_scolaire_id'])
-            ->where('id', '!=', $affectation->id)
-            ->exists();
-
-        if ($doublon) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cet enseignant est déjà affecté à cette matière, dans cette classe, pour cette année scolaire.',
-            ], 422);
-        }
-
-        $affectation->update($donneesValidees);
+        $affectation = $this->affectationService->modifier($affectation, $donneesValidees);
 
         return response()->json([
             'success' => true,
