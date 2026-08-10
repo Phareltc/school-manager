@@ -3,11 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bulletin;
+use App\Services\BulletinService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class BulletinController extends Controller
 {
+    public function __construct(
+        protected BulletinService $bulletinService
+    ) {}
+
     public function index(): JsonResponse
     {
         $bulletins = Bulletin::with(['eleve', 'anneeScolaire'])->get();
@@ -34,19 +39,7 @@ class BulletinController extends Controller
             'appreciation' => 'required|string',
         ]);
 
-        // Règle métier : un élève ne peut avoir qu'un seul bulletin par année scolaire
-        $dejaBulletin = Bulletin::where('eleve_id', $donneesValidees['eleve_id'])
-            ->where('annee_scolaire_id', $donneesValidees['annee_scolaire_id'])
-            ->exists();
-
-        if ($dejaBulletin) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cet élève possède déjà un bulletin pour cette année scolaire.',
-            ], 422);
-        }
-
-        $bulletin = Bulletin::create($donneesValidees);
+        $bulletin = $this->bulletinService->creer($donneesValidees);
 
         return response()->json([
             'success' => true,
@@ -81,19 +74,7 @@ class BulletinController extends Controller
             'appreciation' => 'required|string',
         ]);
 
-        $dejaBulletin = Bulletin::where('eleve_id', $donneesValidees['eleve_id'])
-            ->where('annee_scolaire_id', $donneesValidees['annee_scolaire_id'])
-            ->where('id', '!=', $bulletin->id)
-            ->exists();
-
-        if ($dejaBulletin) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cet élève possède déjà un bulletin pour cette année scolaire.',
-            ], 422);
-        }
-
-        $bulletin->update($donneesValidees);
+        $bulletin = $this->bulletinService->modifier($bulletin, $donneesValidees);
 
         return response()->json([
             'success' => true,
