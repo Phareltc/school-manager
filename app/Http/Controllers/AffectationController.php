@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Affectation;
 use App\Models\Enseignant;
 use App\Services\AffectationService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AffectationController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(
         protected AffectationService $affectationService
     ) {}
@@ -19,13 +22,10 @@ class AffectationController extends Controller
         $user = $request->user();
 
         if ($user->hasRole('admin')) {
-            // L'admin voit toutes les affectations
             $affectations = Affectation::with(['enseignant.user', 'classe', 'matiere', 'anneeScolaire'])->get();
         } else {
-            // On retrouve l'enseignant lié à CET utilisateur authentifié, jamais depuis une donnée envoyée par le client
             $enseignant = Enseignant::where('user_id', $user->id)->first();
 
-            // Si l'utilisateur connecté n'est pas lié à une fiche enseignant, il n'a aucune affectation à voir
             $affectations = $enseignant
                 ? Affectation::with(['enseignant.user', 'classe', 'matiere', 'anneeScolaire'])
                     ->where('enseignant_id', $enseignant->id)
@@ -33,11 +33,7 @@ class AffectationController extends Controller
                 : collect();
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Liste des affectations récupérée avec succès',
-            'data' => $affectations
-        ], 200);
+        return $this->success('Liste des affectations récupérée avec succès', $affectations);
     }
 
     public function create()
@@ -57,36 +53,24 @@ class AffectationController extends Controller
 
         $affectation = $this->affectationService->creer($donneesValidees);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Affectation créée avec succès !',
-            'data' => $affectation
-        ], 201);
+        return $this->success('Affectation créée avec succès !', $affectation, 201);
     }
 
     public function show(Request $request, Affectation $affectation): JsonResponse
     {
         $user = $request->user();
 
-        // Un enseignant ne peut consulter QUE ses propres affectations, même via l'URL directe /affectations/{id}
         if (!$user->hasRole('admin')) {
             $enseignant = Enseignant::where('user_id', $user->id)->first();
 
             if (!$enseignant || $affectation->enseignant_id !== $enseignant->id) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vous n\'êtes pas autorisé à consulter cette affectation.',
-                ], 403);
+                return $this->error('Vous n\'êtes pas autorisé à consulter cette affectation.', 403);
             }
         }
 
         $affectation->load(['enseignant.user', 'classe', 'matiere', 'anneeScolaire']);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Détails de l\'affectation récupérés avec succès !',
-            'data' => $affectation
-        ], 200);
+        return $this->success('Détails de l\'affectation récupérés avec succès !', $affectation);
     }
 
     public function edit(Affectation $affectation)
@@ -106,20 +90,13 @@ class AffectationController extends Controller
 
         $affectation = $this->affectationService->modifier($affectation, $donneesValidees);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Affectation modifiée avec succès !',
-            'data' => $affectation
-        ], 200);
+        return $this->success('Affectation modifiée avec succès !', $affectation);
     }
 
     public function destroy(Affectation $affectation): JsonResponse
     {
         $affectation->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Affectation supprimée avec succès.'
-        ], 200);
+        return $this->success('Affectation supprimée avec succès.');
     }
 }

@@ -5,12 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\Affectation;
 use App\Models\Bulletin;
 use App\Models\Enseignant;
+use App\Models\Inscription;
 use App\Services\BulletinService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class BulletinController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(
         protected BulletinService $bulletinService
     ) {}
@@ -34,11 +38,7 @@ class BulletinController extends Controller
                     ->get();
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Liste des bulletins récupérée avec succès',
-            'data' => $bulletins
-        ], 200);
+        return $this->success('Liste des bulletins récupérée avec succès', $bulletins);
     }
 
     public function create()
@@ -58,11 +58,7 @@ class BulletinController extends Controller
 
         $bulletin = $this->bulletinService->creer($donneesValidees);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Bulletin créé avec succès !',
-            'data' => $bulletin
-        ], 201);
+        return $this->success('Bulletin créé avec succès !', $bulletin, 201);
     }
 
     public function show(Request $request, Bulletin $bulletin): JsonResponse
@@ -72,26 +68,19 @@ class BulletinController extends Controller
         if (!$user->hasRole('admin')) {
             $classeIds = $this->classesEnseigneesParUtilisateur($user);
 
-            $classeActuelleEleve = \App\Models\Inscription::where('eleve_id', $bulletin->eleve_id)
+            $classeActuelleEleve = Inscription::where('eleve_id', $bulletin->eleve_id)
                 ->where('annee_scolaire_id', $bulletin->annee_scolaire_id)
                 ->where('statut', 'actif')
                 ->value('classe_id');
 
             if (!$classeActuelleEleve || !$classeIds->contains($classeActuelleEleve)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vous n\'êtes pas autorisé à consulter ce bulletin.',
-                ], 403);
+                return $this->error('Vous n\'êtes pas autorisé à consulter ce bulletin.', 403);
             }
         }
 
         $bulletin->load(['eleve', 'anneeScolaire']);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Détails du bulletin récupérés avec succès !',
-            'data' => $bulletin
-        ], 200);
+        return $this->success('Détails du bulletin récupérés avec succès !', $bulletin);
     }
 
     public function edit(Bulletin $bulletin)
@@ -111,27 +100,16 @@ class BulletinController extends Controller
 
         $bulletin = $this->bulletinService->modifier($bulletin, $donneesValidees);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Bulletin modifié avec succès !',
-            'data' => $bulletin
-        ], 200);
+        return $this->success('Bulletin modifié avec succès !', $bulletin);
     }
 
     public function destroy(Bulletin $bulletin): JsonResponse
     {
         $bulletin->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Bulletin supprimé avec succès.'
-        ], 200);
+        return $this->success('Bulletin supprimé avec succès.');
     }
 
-    /**
-     * Retourne les IDs des classes où l'enseignant connecté a au moins une affectation
-     * (peu importe la matière) — sert à déterminer quels bulletins d'élèves il peut consulter.
-     */
     protected function classesEnseigneesParUtilisateur($user)
     {
         $enseignant = Enseignant::where('user_id', $user->id)->first();

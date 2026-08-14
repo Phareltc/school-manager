@@ -3,20 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\Salle;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SalleController extends Controller
 {
+    use ApiResponse;
+
     public function index(): JsonResponse
     {
         $salles = Salle::all();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Liste des salles récupérée avec succès',
-            'data' => $salles
-        ], 200);
+        return $this->success('Liste des salles récupérée avec succès', $salles);
     }
 
     public function create()
@@ -33,20 +32,12 @@ class SalleController extends Controller
 
         $salle = Salle::create($donneesValidees);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Salle créée avec succès !',
-            'data' => $salle
-        ], 201);
+        return $this->success('Salle créée avec succès !', $salle, 201);
     }
 
     public function show(Salle $salle): JsonResponse
     {
-        return response()->json([
-            'success' => true,
-            'message' => 'Détails de la salle récupérés avec succès !',
-            'data' => $salle
-        ], 200);
+        return $this->success('Détails de la salle récupérés avec succès !', $salle);
     }
 
     public function edit(Salle $salle)
@@ -63,20 +54,13 @@ class SalleController extends Controller
 
         $salle->update($donneesValidees);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Salle modifiée avec succès !',
-            'data' => $salle
-        ], 200);
+        return $this->success('Salle modifiée avec succès !', $salle);
     }
 
     public function destroy(Salle $salle): JsonResponse
     {
         $salle->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Salle supprimée avec succès.'
-        ], 200);
+        return $this->success('Salle supprimée avec succès.');
     }
 }

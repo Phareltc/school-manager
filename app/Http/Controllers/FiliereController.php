@@ -3,20 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\Filiere;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class FiliereController extends Controller
 {
+    use ApiResponse;
+
     public function index(): JsonResponse
     {
         $filieres = Filiere::all();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Liste des filières récupérée avec succès',
-            'data' => $filieres
-        ], 200);
+        return $this->success('Liste des filières récupérée avec succès', $filieres);
     }
 
     public function create()
@@ -32,20 +31,12 @@ class FiliereController extends Controller
 
         $filiere = Filiere::create($donneesValidees);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Filière créée avec succès !',
-            'data' => $filiere
-        ], 201);
+        return $this->success('Filière créée avec succès !', $filiere, 201);
     }
 
     public function show(Filiere $filiere): JsonResponse
     {
-        return response()->json([
-            'success' => true,
-            'message' => 'Détails de la filière récupérés avec succès !',
-            'data' => $filiere
-        ], 200);
+        return $this->success('Détails de la filière récupérés avec succès !', $filiere);
     }
 
     public function edit(Filiere $filiere)
@@ -61,20 +52,13 @@ class FiliereController extends Controller
 
         $filiere->update($donneesValidees);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Filière modifiée avec succès !',
-            'data' => $filiere
-        ], 200);
+        return $this->success('Filière modifiée avec succès !', $filiere);
     }
 
     public function destroy(Filiere $filiere): JsonResponse
     {
         $filiere->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Filière supprimée avec succès.'
-        ], 200);
+        return $this->success('Filière supprimée avec succès.');
     }
 }

@@ -3,20 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\Matiere;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class MatiereController extends Controller
 {
+    use ApiResponse;
+
     public function index(): JsonResponse
     {
         $matieres = Matiere::all();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Liste des matières récupérée avec succès',
-            'data' => $matieres
-        ], 200);
+        return $this->success('Liste des matières récupérée avec succès', $matieres);
     }
 
     public function create()
@@ -33,20 +32,12 @@ class MatiereController extends Controller
 
         $matiere = Matiere::create($donneesValidees);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Matière créée avec succès !',
-            'data' => $matiere
-        ], 201);
+        return $this->success('Matière créée avec succès !', $matiere, 201);
     }
 
     public function show(Matiere $matiere): JsonResponse
     {
-        return response()->json([
-            'success' => true,
-            'message' => 'Détails de la matière récupérés avec succès !',
-            'data' => $matiere
-        ], 200);
+        return $this->success('Détails de la matière récupérés avec succès !', $matiere);
     }
 
     public function edit(Matiere $matiere)
@@ -63,20 +54,13 @@ class MatiereController extends Controller
 
         $matiere->update($donneesValidees);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Matière modifiée avec succès !',
-            'data' => $matiere
-        ], 200);
+        return $this->success('Matière modifiée avec succès !', $matiere);
     }
 
     public function destroy(Matiere $matiere): JsonResponse
     {
         $matiere->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Matière supprimée avec succès.'
-        ], 200);
+        return $this->success('Matière supprimée avec succès.');
     }
 }

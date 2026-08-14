@@ -5,13 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Affectation;
 use App\Models\Enseignant;
 use App\Models\Examen;
+use App\Models\Inscription;
 use App\Models\Note;
 use App\Services\NoteService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class NoteController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(
         protected NoteService $noteService
     ) {}
@@ -43,11 +47,7 @@ class NoteController extends Controller
                     ->get();
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Liste des notes récupérée avec succès',
-            'data' => $notes
-        ], 200);
+        return $this->success('Liste des notes récupérée avec succès', $notes);
     }
 
     public function create()
@@ -67,37 +67,23 @@ class NoteController extends Controller
         ]);
 
         if (!$this->estAutorisePourCetteCombinaison($request->user(), $donneesValidees['matiere_id'], $donneesValidees['eleve_id'], $donneesValidees['examen_id'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Vous n\'êtes pas affecté à cette matière pour la classe de cet élève.',
-            ], 403);
+            return $this->error('Vous n\'êtes pas affecté à cette matière pour la classe de cet élève.', 403);
         }
 
         $note = $this->noteService->creer($donneesValidees);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Note créée avec succès !',
-            'data' => $note
-        ], 201);
+        return $this->success('Note créée avec succès !', $note, 201);
     }
 
     public function show(Request $request, Note $note): JsonResponse
     {
         if (!$this->estAutorisePourCetteCombinaison($request->user(), $note->matiere_id, $note->eleve_id, $note->examen_id)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Vous n\'êtes pas autorisé à consulter cette note.',
-            ], 403);
+            return $this->error('Vous n\'êtes pas autorisé à consulter cette note.', 403);
         }
 
         $note->load(['eleve', 'examen', 'matiere', 'enseignant.user']);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Détails de la note récupérés avec succès !',
-            'data' => $note
-        ], 200);
+        return $this->success('Détails de la note récupérés avec succès !', $note);
     }
 
     public function edit(Note $note)
@@ -117,41 +103,25 @@ class NoteController extends Controller
         ]);
 
         if (!$this->estAutorisePourCetteCombinaison($request->user(), $donneesValidees['matiere_id'], $donneesValidees['eleve_id'], $donneesValidees['examen_id'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Vous n\'êtes pas affecté à cette matière pour la classe de cet élève.',
-            ], 403);
+            return $this->error('Vous n\'êtes pas affecté à cette matière pour la classe de cet élève.', 403);
         }
 
         $note = $this->noteService->modifier($note, $donneesValidees);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Note modifiée avec succès !',
-            'data' => $note
-        ], 200);
+        return $this->success('Note modifiée avec succès !', $note);
     }
 
     public function destroy(Request $request, Note $note): JsonResponse
     {
         if (!$this->estAutorisePourCetteCombinaison($request->user(), $note->matiere_id, $note->eleve_id, $note->examen_id)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Vous n\'êtes pas autorisé à supprimer cette note.',
-            ], 403);
+            return $this->error('Vous n\'êtes pas autorisé à supprimer cette note.', 403);
         }
 
         $note->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Note supprimée avec succès.'
-        ], 200);
+        return $this->success('Note supprimée avec succès.');
     }
 
-    /**
-     * Retourne les affectations de l'enseignant lié à l'utilisateur connecté.
-     */
     protected function affectationsDeLUtilisateur($user)
     {
         $enseignant = Enseignant::where('user_id', $user->id)->first();
@@ -161,11 +131,6 @@ class NoteController extends Controller
             : collect();
     }
 
-    /**
-     * Vérifie que l'utilisateur (admin ou enseignant affecté) peut agir sur cette
-     * combinaison élève/matière/examen, en se basant sur la classe ACTUELLE de l'élève
-     * pour l'année scolaire de l'examen.
-     */
     protected function estAutorisePourCetteCombinaison($user, int $matiereId, int $eleveId, int $examenId): bool
     {
         if ($user->hasRole('admin')) {
@@ -182,7 +147,7 @@ class NoteController extends Controller
             return false;
         }
 
-        $classeId = \App\Models\Inscription::where('eleve_id', $eleveId)
+        $classeId = Inscription::where('eleve_id', $eleveId)
             ->where('annee_scolaire_id', $anneeScolaireId)
             ->where('statut', 'actif')
             ->value('classe_id');

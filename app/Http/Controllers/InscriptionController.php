@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Inscription;
 use App\Services\InscriptionService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class InscriptionController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(
         protected InscriptionService $inscriptionService
     ) {}
@@ -17,11 +20,7 @@ class InscriptionController extends Controller
     {
         $inscriptions = Inscription::with(['eleve', 'classe', 'anneeScolaire'])->get();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Liste des inscriptions récupérée avec succès',
-            'data' => $inscriptions
-        ], 200);
+        return $this->success('Liste des inscriptions récupérée avec succès', $inscriptions);
     }
 
     public function create()
@@ -41,22 +40,14 @@ class InscriptionController extends Controller
 
         $inscription = $this->inscriptionService->creer($donneesValidees);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Inscription créée avec succès !',
-            'data' => $inscription
-        ], 201);
+        return $this->success('Inscription créée avec succès !', $inscription, 201);
     }
 
     public function show(Inscription $inscription): JsonResponse
     {
         $inscription->load(['eleve', 'classe', 'anneeScolaire']);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Détails de l\'inscription récupérés avec succès !',
-            'data' => $inscription
-        ], 200);
+        return $this->success('Détails de l\'inscription récupérés avec succès !', $inscription);
     }
 
     public function edit(Inscription $inscription)
@@ -76,20 +67,13 @@ class InscriptionController extends Controller
 
         $inscription = $this->inscriptionService->modifier($inscription, $donneesValidees);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Inscription modifiée avec succès !',
-            'data' => $inscription
-        ], 200);
+        return $this->success('Inscription modifiée avec succès !', $inscription);
     }
 
     public function destroy(Inscription $inscription): JsonResponse
     {
         $inscription->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Inscription supprimée avec succès.'
-        ], 200);
+        return $this->success('Inscription supprimée avec succès.');
     }
 }

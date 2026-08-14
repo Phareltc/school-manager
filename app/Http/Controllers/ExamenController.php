@@ -3,20 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\Examen;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ExamenController extends Controller
 {
+    use ApiResponse;
+
     public function index(): JsonResponse
     {
         $examens = Examen::with('anneeScolaire')->get();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Liste des examens récupérée avec succès',
-            'data' => $examens
-        ], 200);
+        return $this->success('Liste des examens récupérée avec succès', $examens);
     }
 
     public function create()
@@ -34,22 +33,14 @@ class ExamenController extends Controller
 
         $examen = Examen::create($donneesValidees);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Examen créé avec succès !',
-            'data' => $examen
-        ], 201);
+        return $this->success('Examen créé avec succès !', $examen, 201);
     }
 
     public function show(Examen $examen): JsonResponse
     {
         $examen->load('anneeScolaire');
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Détails de l\'examen récupérés avec succès !',
-            'data' => $examen
-        ], 200);
+        return $this->success('Détails de l\'examen récupérés avec succès !', $examen);
     }
 
     public function edit(Examen $examen)
@@ -67,20 +58,13 @@ class ExamenController extends Controller
 
         $examen->update($donneesValidees);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Examen modifié avec succès !',
-            'data' => $examen
-        ], 200);
+        return $this->success('Examen modifié avec succès !', $examen);
     }
 
     public function destroy(Examen $examen): JsonResponse
     {
         $examen->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Examen supprimé avec succès.'
-        ], 200);
+        return $this->success('Examen supprimé avec succès.');
     }
 }

@@ -6,11 +6,14 @@ use App\Models\Affectation;
 use App\Models\BulletinDetail;
 use App\Models\Enseignant;
 use App\Models\Inscription;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class BulletinDetailController extends Controller
 {
+    use ApiResponse;
+
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -29,11 +32,7 @@ class BulletinDetailController extends Controller
                     ->get();
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Liste des détails de bulletin récupérée avec succès',
-            'data' => $bulletinDetails
-        ], 200);
+        return $this->success('Liste des détails de bulletin récupérée avec succès', $bulletinDetails);
     }
 
     public function create()
@@ -55,19 +54,12 @@ class BulletinDetailController extends Controller
             ->exists();
 
         if ($dejaDetail) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Ce bulletin possède déjà une ligne pour cette matière.',
-            ], 422);
+            return $this->error('Ce bulletin possède déjà une ligne pour cette matière.', 422);
         }
 
         $bulletinDetail = BulletinDetail::create($donneesValidees);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Détail de bulletin créé avec succès !',
-            'data' => $bulletinDetail
-        ], 201);
+        return $this->success('Détail de bulletin créé avec succès !', $bulletinDetail, 201);
     }
 
     public function show(Request $request, BulletinDetail $bulletinDetail): JsonResponse
@@ -84,20 +76,13 @@ class BulletinDetailController extends Controller
                 ->value('classe_id');
 
             if (!$classeActuelleEleve || !$classeIds->contains($classeActuelleEleve)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vous n\'êtes pas autorisé à consulter ce détail de bulletin.',
-                ], 403);
+                return $this->error('Vous n\'êtes pas autorisé à consulter ce détail de bulletin.', 403);
             }
         }
 
         $bulletinDetail->load(['bulletin.eleve', 'matiere']);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Détails récupérés avec succès !',
-            'data' => $bulletinDetail
-        ], 200);
+        return $this->success('Détails récupérés avec succès !', $bulletinDetail);
     }
 
     public function edit(BulletinDetail $bulletinDetail)
@@ -120,29 +105,19 @@ class BulletinDetailController extends Controller
             ->exists();
 
         if ($dejaDetail) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Ce bulletin possède déjà une ligne pour cette matière.',
-            ], 422);
+            return $this->error('Ce bulletin possède déjà une ligne pour cette matière.', 422);
         }
 
         $bulletinDetail->update($donneesValidees);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Détail de bulletin modifié avec succès !',
-            'data' => $bulletinDetail
-        ], 200);
+        return $this->success('Détail de bulletin modifié avec succès !', $bulletinDetail);
     }
 
     public function destroy(BulletinDetail $bulletinDetail): JsonResponse
     {
         $bulletinDetail->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Détail de bulletin supprimé avec succès.'
-        ], 200);
+        return $this->success('Détail de bulletin supprimé avec succès.');
     }
 
     protected function classesEnseigneesParUtilisateur($user)

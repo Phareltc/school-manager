@@ -6,11 +6,14 @@ use App\Models\Affectation;
 use App\Models\Cours;
 use App\Models\Enseignant;
 use App\Models\Presence;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class PresenceController extends Controller
 {
+    use ApiResponse;
+
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -25,11 +28,7 @@ class PresenceController extends Controller
                 : Presence::with(['eleve', 'cours'])->whereIn('cours_id', $coursIds)->get();
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Liste des présences récupérée avec succès',
-            'data' => $presences
-        ], 200);
+        return $this->success('Liste des présences récupérée avec succès', $presences);
     }
 
     public function create()
@@ -51,10 +50,7 @@ class PresenceController extends Controller
         ]);
 
         if (!$this->peutAgirSurCeCours($request->user(), $donneesValidees['cours_id'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Vous n\'êtes pas autorisé à enregistrer une présence sur ce cours.',
-            ], 403);
+            return $this->error('Vous n\'êtes pas autorisé à enregistrer une présence sur ce cours.', 403);
         }
 
         $dejaPresence = Presence::where('eleve_id', $donneesValidees['eleve_id'])
@@ -63,37 +59,23 @@ class PresenceController extends Controller
             ->exists();
 
         if ($dejaPresence) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Une présence a déjà été enregistrée pour cet élève, ce cours, à cette date.',
-            ], 422);
+            return $this->error('Une présence a déjà été enregistrée pour cet élève, ce cours, à cette date.', 422);
         }
 
         $presence = Presence::create($donneesValidees);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Présence enregistrée avec succès !',
-            'data' => $presence
-        ], 201);
+        return $this->success('Présence enregistrée avec succès !', $presence, 201);
     }
 
     public function show(Request $request, Presence $presence): JsonResponse
     {
         if (!$this->peutAgirSurCeCours($request->user(), $presence->cours_id)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Vous n\'êtes pas autorisé à consulter cette présence.',
-            ], 403);
+            return $this->error('Vous n\'êtes pas autorisé à consulter cette présence.', 403);
         }
 
         $presence->load(['eleve', 'cours']);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Détails de la présence récupérés avec succès !',
-            'data' => $presence
-        ], 200);
+        return $this->success('Détails de la présence récupérés avec succès !', $presence);
     }
 
     public function edit(Presence $presence)
@@ -115,10 +97,7 @@ class PresenceController extends Controller
         ]);
 
         if (!$this->peutAgirSurCeCours($request->user(), $donneesValidees['cours_id'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Vous n\'êtes pas autorisé à modifier cette présence.',
-            ], 403);
+            return $this->error('Vous n\'êtes pas autorisé à modifier cette présence.', 403);
         }
 
         $dejaPresence = Presence::where('eleve_id', $donneesValidees['eleve_id'])
@@ -128,41 +107,25 @@ class PresenceController extends Controller
             ->exists();
 
         if ($dejaPresence) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Une présence a déjà été enregistrée pour cet élève, ce cours, à cette date.',
-            ], 422);
+            return $this->error('Une présence a déjà été enregistrée pour cet élève, ce cours, à cette date.', 422);
         }
 
         $presence->update($donneesValidees);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Présence modifiée avec succès !',
-            'data' => $presence
-        ], 200);
+        return $this->success('Présence modifiée avec succès !', $presence);
     }
 
     public function destroy(Request $request, Presence $presence): JsonResponse
     {
         if (!$this->peutAgirSurCeCours($request->user(), $presence->cours_id)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Vous n\'êtes pas autorisé à supprimer cette présence.',
-            ], 403);
+            return $this->error('Vous n\'êtes pas autorisé à supprimer cette présence.', 403);
         }
 
         $presence->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Présence supprimée avec succès.'
-        ], 200);
+        return $this->success('Présence supprimée avec succès.');
     }
 
-    /**
-     * Retourne les IDs de cours dont l'enseignant connecté est responsable (via ses affectations).
-     */
     protected function coursDeLEnseignant($user)
     {
         $enseignant = Enseignant::where('user_id', $user->id)->first();
@@ -176,11 +139,6 @@ class PresenceController extends Controller
         return Cours::whereIn('affectation_id', $affectationIds)->pluck('id');
     }
 
-    /**
-     * Vérifie que l'utilisateur (admin, ou enseignant responsable de ce cours précis) peut agir dessus.
-     * IMPORTANT : on ne fait jamais confiance à un cours_id envoyé par le client sans vérifier
-     * qu'il appartient réellement à l'enseignant connecté.
-     */
     protected function peutAgirSurCeCours($user, int $coursId): bool
     {
         if ($user->hasRole('admin')) {

@@ -3,37 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Models\Eleve;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class EleveController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    use ApiResponse;
+
     public function index(): JsonResponse
     {
-        $eleve = Eleve::all();
+        $eleves = Eleve::all();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Liste des élèves récupéré avec succès',
-            'data' => $eleve
-        ], 200);
+        return $this->success('Liste des élèves récupérée avec succès', $eleves);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         //
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request): JsonResponse
     {
         $donneesValidees = $request->validate([
@@ -48,36 +38,19 @@ class EleveController extends Controller
 
         $eleve = Eleve::create($donneesValidees);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Élève inscrit avec succès !',
-            'data' => $eleve
-        ], 201);
+        return $this->success('Élève inscrit avec succès !', $eleve, 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Eleve $eleve): JsonResponse
     {
-        return response()->json([
-            'success' => true,
-            'message' => 'Elève trouvé avec succès!',
-            'data' => $eleve
-        ], 200);
+        return $this->success('Élève trouvé avec succès !', $eleve);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Eleve $eleve)
     {
         //
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Eleve $eleve): JsonResponse
     {
         $donneesValidees = $request->validate([
@@ -92,24 +65,13 @@ class EleveController extends Controller
 
         $eleve->update($donneesValidees);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Eleve modifié avec succès!',
-            'data' => $eleve
-        ], 200);
+        return $this->success('Élève modifié avec succès !', $eleve);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Eleve $eleve): JsonResponse
     {
         $eleve->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Elève supprimé avec succès!',
-            'data' => $eleve
-        ], 200);
+        return $this->success('Élève supprimé avec succès.');
     }
 }

@@ -3,20 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\Classe;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ClasseController extends Controller
 {
+    use ApiResponse;
+
     public function index(): JsonResponse
     {
         $classes = Classe::with(['niveau', 'filiere'])->get();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Liste des classes récupérée avec succès',
-            'data' => $classes
-        ], 200);
+        return $this->success('Liste des classes récupérée avec succès', $classes);
     }
 
     public function create()
@@ -35,22 +34,14 @@ class ClasseController extends Controller
 
         $classe = Classe::create($donneesValidees);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Classe créée avec succès !',
-            'data' => $classe
-        ], 201);
+        return $this->success('Classe créée avec succès !', $classe, 201);
     }
 
     public function show(Classe $classe): JsonResponse
     {
         $classe->load(['niveau', 'filiere']);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Détails de la classe récupérés avec succès !',
-            'data' => $classe
-        ], 200);
+        return $this->success('Détails de la classe récupérés avec succès !', $classe);
     }
 
     public function edit(Classe $classe)
@@ -69,20 +60,13 @@ class ClasseController extends Controller
 
         $classe->update($donneesValidees);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Classe modifiée avec succès !',
-            'data' => $classe
-        ], 200);
+        return $this->success('Classe modifiée avec succès !', $classe);
     }
 
     public function destroy(Classe $classe): JsonResponse
     {
         $classe->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Classe supprimée avec succès.'
-        ], 200);
+        return $this->success('Classe supprimée avec succès.');
     }
 }
