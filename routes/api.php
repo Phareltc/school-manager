@@ -88,38 +88,51 @@ Route::middleware(['auth:sanctum', 'permission:gerer-inscriptions'])->group(func
 });
 
 // ============================================
-// MODULE PÉDAGOGIQUE (pas encore protégé)
+// MODULE PÉDAGOGIQUE (protégé)
 // ============================================
 
-Route::get('/matieres', [MatiereController::class, 'index']);
-Route::post('/matieres', [MatiereController::class, 'store']);
-Route::get('/matieres/{matiere}', [MatiereController::class, 'show']);
-Route::put('/matieres/{matiere}', [MatiereController::class, 'update']);
-Route::delete('/matieres/{matiere}', [MatiereController::class, 'destroy']);
+// --- Lecture : accessible à tout utilisateur authentifié ---
+// (matieres, salles, enseignants = référentiel commun, pas de confidentialité)
+// (affectations, cours = filtrage géré DANS le contrôleur selon le rôle)
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/matieres', [MatiereController::class, 'index']);
+    Route::get('/matieres/{matiere}', [MatiereController::class, 'show']);
 
-Route::get('/salles', [SalleController::class, 'index']);
-Route::post('/salles', [SalleController::class, 'store']);
-Route::get('/salles/{salle}', [SalleController::class, 'show']);
-Route::put('/salles/{salle}', [SalleController::class, 'update']);
-Route::delete('/salles/{salle}', [SalleController::class, 'destroy']);
+    Route::get('/salles', [SalleController::class, 'index']);
+    Route::get('/salles/{salle}', [SalleController::class, 'show']);
 
-Route::get('/enseignants', [EnseignantController::class, 'index']);
-Route::post('/enseignants', [EnseignantController::class, 'store']);
-Route::get('/enseignants/{enseignant}', [EnseignantController::class, 'show']);
-Route::put('/enseignants/{enseignant}', [EnseignantController::class, 'update']);
-Route::delete('/enseignants/{enseignant}', [EnseignantController::class, 'destroy']);
+    Route::get('/enseignants', [EnseignantController::class, 'index']);
+    Route::get('/enseignants/{enseignant}', [EnseignantController::class, 'show']);
 
-Route::get('/affectations', [AffectationController::class, 'index']);
-Route::post('/affectations', [AffectationController::class, 'store']);
-Route::get('/affectations/{affectation}', [AffectationController::class, 'show']);
-Route::put('/affectations/{affectation}', [AffectationController::class, 'update']);
-Route::delete('/affectations/{affectation}', [AffectationController::class, 'destroy']);
+    Route::get('/affectations', [AffectationController::class, 'index']);
+    Route::get('/affectations/{affectation}', [AffectationController::class, 'show']);
 
-Route::get('/cours', [CoursController::class, 'index']);
-Route::post('/cours', [CoursController::class, 'store']);
-Route::get('/cours/{cours}', [CoursController::class, 'show']);
-Route::put('/cours/{cours}', [CoursController::class, 'update']);
-Route::delete('/cours/{cours}', [CoursController::class, 'destroy']);
+    Route::get('/cours', [CoursController::class, 'index']);
+    Route::get('/cours/{cours}', [CoursController::class, 'show']);
+});
+
+// --- Écriture : réservée à l'admin ---
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::post('/matieres', [MatiereController::class, 'store']);
+    Route::put('/matieres/{matiere}', [MatiereController::class, 'update']);
+    Route::delete('/matieres/{matiere}', [MatiereController::class, 'destroy']);
+
+    Route::post('/salles', [SalleController::class, 'store']);
+    Route::put('/salles/{salle}', [SalleController::class, 'update']);
+    Route::delete('/salles/{salle}', [SalleController::class, 'destroy']);
+
+    Route::post('/enseignants', [EnseignantController::class, 'store']);
+    Route::put('/enseignants/{enseignant}', [EnseignantController::class, 'update']);
+    Route::delete('/enseignants/{enseignant}', [EnseignantController::class, 'destroy']);
+
+    Route::post('/affectations', [AffectationController::class, 'store']);
+    Route::put('/affectations/{affectation}', [AffectationController::class, 'update']);
+    Route::delete('/affectations/{affectation}', [AffectationController::class, 'destroy']);
+
+    Route::post('/cours', [CoursController::class, 'store']);
+    Route::put('/cours/{cours}', [CoursController::class, 'update']);
+    Route::delete('/cours/{cours}', [CoursController::class, 'destroy']);
+});
 
 // ============================================
 // MODULE ÉVALUATIONS (pas encore protégé)
