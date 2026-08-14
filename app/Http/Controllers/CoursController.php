@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cours;
+use App\Models\Enseignant;
 use App\Services\CoursService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,9 +14,24 @@ class CoursController extends Controller
         protected CoursService $coursService
     ) {}
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $cours = Cours::with(['affectation.enseignant.user', 'affectation.classe', 'affectation.matiere', 'salle'])->get();
+        $user = $request->user();
+
+        if ($user->hasRole('admin')) {
+            $cours = Cours::with(['affectation.enseignant.user', 'affectation.classe', 'affectation.matiere', 'salle'])->get();
+        } else {
+            $enseignant = Enseignant::where('user_id', $user->id)->first();
+
+            // whereHas filtre les cours dont l'affectation liée appartient à CET enseignant
+            $cours = $enseignant
+                ? Cours::with(['affectation.enseignant.user', 'affectation.classe', 'affectation.matiere', 'salle'])
+                    ->whereHas('affectation', function ($query) use ($enseignant) {
+                        $query->where('enseignant_id', $enseignant->id);
+                    })
+                    ->get()
+                : collect();
+        }
 
         return response()->json([
             'success' => true,
@@ -48,8 +64,24 @@ class CoursController extends Controller
         ], 201);
     }
 
-    public function show(Cours $cours): JsonResponse
+    public function show(Request $request, Cours $cours): JsonResponse
     {
+        $user = $request->user();
+
+        if (!$user->hasRole('admin')) {
+            $enseignant = Enseignant::where('user_id', $user->id)->first();
+
+            // On charge l'affectation pour comparer son enseignant_id
+            $cours->load('affectation');
+
+            if (!$enseignant || $cours->affectation->enseignant_id !== $enseignant->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Vous n\'êtes pas autorisé à consulter ce cours.',
+                ], 403);
+            }
+        }
+
         $cours->load(['affectation.enseignant.user', 'affectation.classe', 'affectation.matiere', 'salle']);
 
         return response()->json([

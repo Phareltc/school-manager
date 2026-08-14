@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Affectation;
+use App\Models\Enseignant;
 use App\Services\AffectationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,9 +14,24 @@ class AffectationController extends Controller
         protected AffectationService $affectationService
     ) {}
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $affectations = Affectation::with(['enseignant.user', 'classe', 'matiere', 'anneeScolaire'])->get();
+        $user = $request->user();
+
+        if ($user->hasRole('admin')) {
+            // L'admin voit toutes les affectations
+            $affectations = Affectation::with(['enseignant.user', 'classe', 'matiere', 'anneeScolaire'])->get();
+        } else {
+            // On retrouve l'enseignant lié à CET utilisateur authentifié, jamais depuis une donnée envoyée par le client
+            $enseignant = Enseignant::where('user_id', $user->id)->first();
+
+            // Si l'utilisateur connecté n'est pas lié à une fiche enseignant, il n'a aucune affectation à voir
+            $affectations = $enseignant
+                ? Affectation::with(['enseignant.user', 'classe', 'matiere', 'anneeScolaire'])
+                    ->where('enseignant_id', $enseignant->id)
+                    ->get()
+                : collect();
+        }
 
         return response()->json([
             'success' => true,
@@ -48,8 +64,22 @@ class AffectationController extends Controller
         ], 201);
     }
 
-    public function show(Affectation $affectation): JsonResponse
+    public function show(Request $request, Affectation $affectation): JsonResponse
     {
+        $user = $request->user();
+
+        // Un enseignant ne peut consulter QUE ses propres affectations, même via l'URL directe /affectations/{id}
+        if (!$user->hasRole('admin')) {
+            $enseignant = Enseignant::where('user_id', $user->id)->first();
+
+            if (!$enseignant || $affectation->enseignant_id !== $enseignant->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Vous n\'êtes pas autorisé à consulter cette affectation.',
+                ], 403);
+            }
+        }
+
         $affectation->load(['enseignant.user', 'classe', 'matiere', 'anneeScolaire']);
 
         return response()->json([
