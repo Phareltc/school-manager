@@ -138,29 +138,46 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 // MODULE ÉVALUATIONS (pas encore protégé)
 // ============================================
 
-Route::get('/examens', [ExamenController::class, 'index']);
-Route::post('/examens', [ExamenController::class, 'store']);
-Route::get('/examens/{examen}', [ExamenController::class, 'show']);
-Route::put('/examens/{examen}', [ExamenController::class, 'update']);
-Route::delete('/examens/{examen}', [ExamenController::class, 'destroy']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/examens', [ExamenController::class, 'index']);
+    Route::get('/examens/{examen}', [ExamenController::class, 'show']);
+});
 
-Route::get('/notes', [NoteController::class, 'index']);
-Route::post('/notes', [NoteController::class, 'store']);
-Route::get('/notes/{note}', [NoteController::class, 'show']);
-Route::put('/notes/{note}', [NoteController::class, 'update']);
-Route::delete('/notes/{note}', [NoteController::class, 'destroy']);
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::post('/examens', [ExamenController::class, 'store']);
+    Route::put('/examens/{examen}', [ExamenController::class, 'update']);
+    Route::delete('/examens/{examen}', [ExamenController::class, 'destroy']);
+});
 
-Route::get('/bulletins', [BulletinController::class, 'index']);
-Route::post('/bulletins', [BulletinController::class, 'store']);
-Route::get('/bulletins/{bulletin}', [BulletinController::class, 'show']);
-Route::put('/bulletins/{bulletin}', [BulletinController::class, 'update']);
-Route::delete('/bulletins/{bulletin}', [BulletinController::class, 'destroy']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/notes', [NoteController::class, 'index']);
+    Route::get('/notes/{note}', [NoteController::class, 'show']);
+    Route::post('/notes', [NoteController::class, 'store']);
+    Route::put('/notes/{note}', [NoteController::class, 'update']);
+    Route::delete('/notes/{note}', [NoteController::class, 'destroy']);
+});
 
-Route::get('/bulletin-details', [BulletinDetailController::class, 'index']);
-Route::post('/bulletin-details', [BulletinDetailController::class, 'store']);
-Route::get('/bulletin-details/{bulletinDetail}', [BulletinDetailController::class, 'show']);
-Route::put('/bulletin-details/{bulletinDetail}', [BulletinDetailController::class, 'update']);
-Route::delete('/bulletin-details/{bulletinDetail}', [BulletinDetailController::class, 'destroy']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/bulletins', [BulletinController::class, 'index']);
+    Route::get('/bulletins/{bulletin}', [BulletinController::class, 'show']);
+});
+
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::post('/bulletins', [BulletinController::class, 'store']);
+    Route::put('/bulletins/{bulletin}', [BulletinController::class, 'update']);
+    Route::delete('/bulletins/{bulletin}', [BulletinController::class, 'destroy']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/bulletin-details', [BulletinDetailController::class, 'index']);
+    Route::get('/bulletin-details/{bulletinDetail}', [BulletinDetailController::class, 'show']);
+});
+
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::post('/bulletin-details', [BulletinDetailController::class, 'store']);
+    Route::put('/bulletin-details/{bulletinDetail}', [BulletinDetailController::class, 'update']);
+    Route::delete('/bulletin-details/{bulletinDetail}', [BulletinDetailController::class, 'destroy']);
+});
 
 // ============================================
 // MODULE VIE SCOLAIRE (pas encore protégé)

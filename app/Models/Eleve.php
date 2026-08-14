@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Eleve extends Model
 {
@@ -17,4 +18,9 @@ class Eleve extends Model
         'telephone',
         'adresse',
     ];
+
+    public function inscriptions(): HasMany
+    {
+        return $this->hasMany(Inscription::class, 'eleve_id');
+    }
 }

@@ -2,15 +2,32 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Affectation;
 use App\Models\BulletinDetail;
+use App\Models\Enseignant;
+use App\Models\Inscription;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class BulletinDetailController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $bulletinDetails = BulletinDetail::with(['bulletin', 'matiere'])->get();
+        $user = $request->user();
+
+        if ($user->hasRole('admin')) {
+            $bulletinDetails = BulletinDetail::with(['bulletin.eleve', 'matiere'])->get();
+        } else {
+            $classeIds = $this->classesEnseigneesParUtilisateur($user);
+
+            $bulletinDetails = $classeIds->isEmpty()
+                ? collect()
+                : BulletinDetail::with(['bulletin.eleve', 'matiere'])
+                    ->whereHas('bulletin.eleve.inscriptions', fn ($q) => $q
+                        ->whereIn('classe_id', $classeIds)
+                        ->where('statut', 'actif'))
+                    ->get();
+        }
 
         return response()->json([
             'success' => true,
@@ -33,7 +50,6 @@ class BulletinDetailController extends Controller
             'appreciation_enseignant' => 'required|string',
         ]);
 
-        // Règle métier : un bulletin ne peut avoir qu'une seule ligne par matière
         $dejaDetail = BulletinDetail::where('bulletin_id', $donneesValidees['bulletin_id'])
             ->where('matiere_id', $donneesValidees['matiere_id'])
             ->exists();
@@ -54,9 +70,28 @@ class BulletinDetailController extends Controller
         ], 201);
     }
 
-    public function show(BulletinDetail $bulletinDetail): JsonResponse
+    public function show(Request $request, BulletinDetail $bulletinDetail): JsonResponse
     {
-        $bulletinDetail->load(['bulletin', 'matiere']);
+        $user = $request->user();
+
+        if (!$user->hasRole('admin')) {
+            $bulletinDetail->load('bulletin');
+            $classeIds = $this->classesEnseigneesParUtilisateur($user);
+
+            $classeActuelleEleve = Inscription::where('eleve_id', $bulletinDetail->bulletin->eleve_id)
+                ->where('annee_scolaire_id', $bulletinDetail->bulletin->annee_scolaire_id)
+                ->where('statut', 'actif')
+                ->value('classe_id');
+
+            if (!$classeActuelleEleve || !$classeIds->contains($classeActuelleEleve)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Vous n\'êtes pas autorisé à consulter ce détail de bulletin.',
+                ], 403);
+            }
+        }
+
+        $bulletinDetail->load(['bulletin.eleve', 'matiere']);
 
         return response()->json([
             'success' => true,
@@ -108,5 +143,14 @@ class BulletinDetailController extends Controller
             'success' => true,
             'message' => 'Détail de bulletin supprimé avec succès.'
         ], 200);
+    }
+
+    protected function classesEnseigneesParUtilisateur($user)
+    {
+        $enseignant = Enseignant::where('user_id', $user->id)->first();
+
+        return $enseignant
+            ? Affectation::where('enseignant_id', $enseignant->id)->pluck('classe_id')->unique()
+            : collect();
     }
 }
