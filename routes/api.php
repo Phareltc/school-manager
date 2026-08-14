@@ -135,7 +135,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 });
 
 // ============================================
-// MODULE ÉVALUATIONS (pas encore protégé)
+// MODULE ÉVALUATIONS (protégé)
 // ============================================
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -180,21 +180,25 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 });
 
 // ============================================
-// MODULE VIE SCOLAIRE (pas encore protégé)
+// MODULE VIE SCOLAIRE (protégé)
 // ============================================
 
-Route::get('/presences', [PresenceController::class, 'index']);
-Route::post('/presences', [PresenceController::class, 'store']);
-Route::get('/presences/{presence}', [PresenceController::class, 'show']);
-Route::put('/presences/{presence}', [PresenceController::class, 'update']);
-Route::delete('/presences/{presence}', [PresenceController::class, 'destroy']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/presences', [PresenceController::class, 'index']);
+    Route::get('/presences/{presence}', [PresenceController::class, 'show']);
+    Route::post('/presences', [PresenceController::class, 'store']);
+    Route::put('/presences/{presence}', [PresenceController::class, 'update']);
+    Route::delete('/presences/{presence}', [PresenceController::class, 'destroy']);
+});
 
 // ============================================
-// MODULE AUDIT (pas encore protégé)
+// MODULE AUDIT (protégé)
 // ============================================
 
-Route::get('/journal-audits', [JournalAuditController::class, 'index']);
-Route::post('/journal-audits', [JournalAuditController::class, 'store']);
-Route::get('/journal-audits/{journalAudit}', [JournalAuditController::class, 'show']);
-Route::put('/journal-audits/{journalAudit}', [JournalAuditController::class, 'update']);
-Route::delete('/journal-audits/{journalAudit}', [JournalAuditController::class, 'destroy']);
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::get('/journal-audits', [JournalAuditController::class, 'index']);
+    Route::get('/journal-audits/{journalAudit}', [JournalAuditController::class, 'show']);
+    Route::post('/journal-audits', [JournalAuditController::class, 'store']);
+    Route::put('/journal-audits/{journalAudit}', [JournalAuditController::class, 'update']);
+    Route::delete('/journal-audits/{journalAudit}', [JournalAuditController::class, 'destroy']);
+});

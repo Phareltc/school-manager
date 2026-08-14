@@ -2,15 +2,28 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Affectation;
+use App\Models\Cours;
+use App\Models\Enseignant;
 use App\Models\Presence;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class PresenceController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $presences = Presence::with(['eleve', 'cours'])->get();
+        $user = $request->user();
+
+        if ($user->hasRole('admin')) {
+            $presences = Presence::with(['eleve', 'cours'])->get();
+        } else {
+            $coursIds = $this->coursDeLEnseignant($user);
+
+            $presences = $coursIds->isEmpty()
+                ? collect()
+                : Presence::with(['eleve', 'cours'])->whereIn('cours_id', $coursIds)->get();
+        }
 
         return response()->json([
             'success' => true,
@@ -37,7 +50,13 @@ class PresenceController extends Controller
             'motif_absence' => 'nullable|string',
         ]);
 
-        // Règle métier : une seule présence par élève, par cours, et par date
+        if (!$this->peutAgirSurCeCours($request->user(), $donneesValidees['cours_id'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vous n\'êtes pas autorisé à enregistrer une présence sur ce cours.',
+            ], 403);
+        }
+
         $dejaPresence = Presence::where('eleve_id', $donneesValidees['eleve_id'])
             ->where('cours_id', $donneesValidees['cours_id'])
             ->where('date_presence', $donneesValidees['date_presence'])
@@ -59,8 +78,15 @@ class PresenceController extends Controller
         ], 201);
     }
 
-    public function show(Presence $presence): JsonResponse
+    public function show(Request $request, Presence $presence): JsonResponse
     {
+        if (!$this->peutAgirSurCeCours($request->user(), $presence->cours_id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vous n\'êtes pas autorisé à consulter cette présence.',
+            ], 403);
+        }
+
         $presence->load(['eleve', 'cours']);
 
         return response()->json([
@@ -88,6 +114,13 @@ class PresenceController extends Controller
             'motif_absence' => 'nullable|string',
         ]);
 
+        if (!$this->peutAgirSurCeCours($request->user(), $donneesValidees['cours_id'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vous n\'êtes pas autorisé à modifier cette présence.',
+            ], 403);
+        }
+
         $dejaPresence = Presence::where('eleve_id', $donneesValidees['eleve_id'])
             ->where('cours_id', $donneesValidees['cours_id'])
             ->where('date_presence', $donneesValidees['date_presence'])
@@ -110,13 +143,50 @@ class PresenceController extends Controller
         ], 200);
     }
 
-    public function destroy(Presence $presence): JsonResponse
+    public function destroy(Request $request, Presence $presence): JsonResponse
     {
+        if (!$this->peutAgirSurCeCours($request->user(), $presence->cours_id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vous n\'êtes pas autorisé à supprimer cette présence.',
+            ], 403);
+        }
+
         $presence->delete();
 
         return response()->json([
             'success' => true,
             'message' => 'Présence supprimée avec succès.'
         ], 200);
+    }
+
+    /**
+     * Retourne les IDs de cours dont l'enseignant connecté est responsable (via ses affectations).
+     */
+    protected function coursDeLEnseignant($user)
+    {
+        $enseignant = Enseignant::where('user_id', $user->id)->first();
+
+        if (!$enseignant) {
+            return collect();
+        }
+
+        $affectationIds = Affectation::where('enseignant_id', $enseignant->id)->pluck('id');
+
+        return Cours::whereIn('affectation_id', $affectationIds)->pluck('id');
+    }
+
+    /**
+     * Vérifie que l'utilisateur (admin, ou enseignant responsable de ce cours précis) peut agir dessus.
+     * IMPORTANT : on ne fait jamais confiance à un cours_id envoyé par le client sans vérifier
+     * qu'il appartient réellement à l'enseignant connecté.
+     */
+    protected function peutAgirSurCeCours($user, int $coursId): bool
+    {
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        return $this->coursDeLEnseignant($user)->contains($coursId);
     }
 }

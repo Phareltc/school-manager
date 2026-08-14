@@ -26,19 +26,13 @@ class JournalAuditController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $donneesValidees = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'action' => 'required|string|max:255',
-            'description' => 'required|string',
-        ]);
-
-        $journalAudit = JournalAudit::create($donneesValidees);
-
+        // Volontairement désactivé : un audit ne doit jamais pouvoir être créé manuellement
+        // par un utilisateur via l'API. Il sera généré automatiquement par le système
+        // (JournalAuditService, à construire plus tard) au moment des actions sensibles.
         return response()->json([
-            'success' => true,
-            'message' => 'Action journalisée avec succès !',
-            'data' => $journalAudit
-        ], 201);
+            'success' => false,
+            'message' => 'La création manuelle d\'un journal d\'audit n\'est pas autorisée.',
+        ], 403);
     }
 
     public function show(JournalAudit $journalAudit): JsonResponse
@@ -59,28 +53,20 @@ class JournalAuditController extends Controller
 
     public function update(Request $request, JournalAudit $journalAudit): JsonResponse
     {
-        $donneesValidees = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'action' => 'required|string|max:255',
-            'description' => 'required|string',
-        ]);
-
-        $journalAudit->update($donneesValidees);
-
+        // Volontairement désactivé : un audit ne doit jamais être modifiable, sous peine
+        // de perdre toute valeur probante.
         return response()->json([
-            'success' => true,
-            'message' => 'Journal modifié avec succès !',
-            'data' => $journalAudit
-        ], 200);
+            'success' => false,
+            'message' => 'La modification d\'un journal d\'audit n\'est pas autorisée.',
+        ], 403);
     }
 
     public function destroy(JournalAudit $journalAudit): JsonResponse
     {
-        $journalAudit->delete();
-
+        // Volontairement désactivé, même pour l'admin : un audit ne doit jamais être supprimable.
         return response()->json([
-            'success' => true,
-            'message' => 'Journal supprimé avec succès.'
-        ], 200);
+            'success' => false,
+            'message' => 'La suppression d\'un journal d\'audit n\'est pas autorisée.',
+        ], 403);
     }
 }
