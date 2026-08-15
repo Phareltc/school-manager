@@ -2,19 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Affectation;
+use App\Models\Cours;
 use App\Models\Enseignant;
-use App\Services\AffectationService;
+use App\Services\CoursService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class AffectationController extends Controller
+class CoursController extends Controller
 {
     use ApiResponse;
 
     public function __construct(
-        protected AffectationService $affectationService
+        protected CoursService $coursService
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -22,18 +22,20 @@ class AffectationController extends Controller
         $user = $request->user();
 
         if ($user->hasRole('admin')) {
-            $affectations = Affectation::with(['enseignant.user', 'classe', 'matiere', 'anneeScolaire'])->get();
+            $cours = Cours::with(['affectation.enseignant.user', 'affectation.classe', 'affectation.matiere', 'salle'])->get();
         } else {
             $enseignant = Enseignant::where('user_id', $user->id)->first();
 
-            $affectations = $enseignant
-                ? Affectation::with(['enseignant.user', 'classe', 'matiere', 'anneeScolaire'])
-                    ->where('enseignant_id', $enseignant->id)
+            $cours = $enseignant
+                ? Cours::with(['affectation.enseignant.user', 'affectation.classe', 'affectation.matiere', 'salle'])
+                    ->whereHas('affectation', function ($query) use ($enseignant) {
+                        $query->where('enseignant_id', $enseignant->id);
+                    })
                     ->get()
                 : collect();
         }
 
-        return $this->success('Liste des affectations récupérée avec succès', $affectations);
+        return $this->success('Liste des cours récupérée avec succès', $cours);
     }
 
     public function create()
@@ -44,59 +46,60 @@ class AffectationController extends Controller
     public function store(Request $request): JsonResponse
     {
         $donneesValidees = $request->validate([
-            'enseignant_id' => 'required|exists:enseignants,id',
-            'classe_id' => 'required|exists:classes,id',
-            'matiere_id' => 'required|exists:matieres,id',
-            'annee_scolaire_id' => 'required|exists:annees_scolaires,id',
-            'charge_horaire_hebdomadaire' => 'required|integer|min:1',
+            'affectation_id' => 'required|exists:affectations,id',
+            'salle_id' => 'required|exists:salles,id',
+            'jour_semaine' => 'required|string|in:lundi,mardi,mercredi,jeudi,vendredi,samedi',
+            'heure_debut' => 'required|date_format:H:i',
+            'heure_fin' => 'required|date_format:H:i|after:heure_debut',
         ]);
 
-        $affectation = $this->affectationService->creer($donneesValidees);
+        $coursCree = $this->coursService->creer($donneesValidees);
 
-        return $this->success('Affectation créée avec succès !', $affectation, 201);
+        return $this->success('Cours créé avec succès !', $coursCree, 201);
     }
 
-    public function show(Request $request, Affectation $affectation): JsonResponse
+    public function show(Request $request, Cours $cours): JsonResponse
     {
         $user = $request->user();
 
         if (!$user->hasRole('admin')) {
             $enseignant = Enseignant::where('user_id', $user->id)->first();
+            $cours->load('affectation');
 
-            if (!$enseignant || $affectation->enseignant_id !== $enseignant->id) {
-                return $this->error('Vous n\'êtes pas autorisé à consulter cette affectation.', 403);
+            if (!$enseignant || $cours->affectation->enseignant_id !== $enseignant->id) {
+                return $this->error('Vous n\'êtes pas autorisé à consulter ce cours.', 403);
             }
         }
 
-        $affectation->load(['enseignant.user', 'classe', 'matiere', 'anneeScolaire']);
+        $cours->load(['affectation.enseignant.user', 'affectation.classe', 'affectation.matiere', 'salle']);
 
-        return $this->success('Détails de l\'affectation récupérés avec succès !', $affectation);
+        return $this->success('Détails du cours récupérés avec succès !', $cours);
     }
 
-    public function edit(Affectation $affectation)
+    public function edit(Cours $cours)
     {
         //
     }
 
-    public function update(Request $request, Affectation $affectation): JsonResponse
+    public function update(Request $request, Cours $cours): JsonResponse
     {
         $donneesValidees = $request->validate([
-            'enseignant_id' => 'required|exists:enseignants,id',
-            'classe_id' => 'required|exists:classes,id',
-            'matiere_id' => 'required|exists:matieres,id',
-            'annee_scolaire_id' => 'required|exists:annees_scolaires,id',
-            'charge_horaire_hebdomadaire' => 'required|integer|min:1',
+            'affectation_id' => 'required|exists:affectations,id',
+            'salle_id' => 'required|exists:salles,id',
+            'jour_semaine' => 'required|string|in:lundi,mardi,mercredi,jeudi,vendredi,samedi',
+            'heure_debut' => 'required|date_format:H:i',
+            'heure_fin' => 'required|date_format:H:i|after:heure_debut',
         ]);
 
-        $affectation = $this->affectationService->modifier($affectation, $donneesValidees);
+        $cours = $this->coursService->modifier($cours, $donneesValidees);
 
-        return $this->success('Affectation modifiée avec succès !', $affectation);
+        return $this->success('Cours modifié avec succès !', $cours);
     }
 
-    public function destroy(Affectation $affectation): JsonResponse
+    public function destroy(Cours $cours): JsonResponse
     {
-        $affectation->delete();
+        $cours->delete();
 
-        return $this->success('Affectation supprimée avec succès.');
+        return $this->success('Cours supprimé avec succès.');
     }
 }
